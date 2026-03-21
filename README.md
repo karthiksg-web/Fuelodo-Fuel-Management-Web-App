@@ -87,12 +87,5 @@ Fuelodo provides:
 
 ## 🏗️ Architecture  
 
-```mermaid
-graph TD
-A[User Browser] --> B[Frontend (HTML/CSS/JS)]
-B --> C[Firebase Authentication]
-B --> D[Firestore Database]
-B --> E[Firebase Hosting]
+<img width="1091" height="724" alt="mermaid-diagram (2)" src="https://github.com/user-attachments/assets/bd02b59f-3fc2-45c8-a084-fcef6368125e" />
 
-C --> D
-D --> B
