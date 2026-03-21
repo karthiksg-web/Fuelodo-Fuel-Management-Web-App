@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="FuelOdo Dashboard - Track fuel usage, vehicle performance, and expenses in real-time.">
+  <title>FuelOdo - Dashboard</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛽</text></svg>">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/vehicles.css">
+  <link rel="stylesheet" href="css/fuel.css">
+  <link rel="stylesheet" href="css/speedometer.css">
+  <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Loading FuelOdo...</div>
+  </div>
+
+  <div class="app-layout" id="appLayout" style="display:none;">
+    <!-- ═══════════════ SIDEBAR ═══════════════ -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <span class="sidebar-logo">⛽</span>
+        <div class="sidebar-brand">Fuel<span>Odo</span></div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">Main</div>
+        <a href="#dashboard" class="nav-link active" data-page="dashboard">
+          <span class="nav-icon">📊</span> Dashboard
+        </a>
+        <a href="#vehicles" class="nav-link" data-page="vehicles">
+          <span class="nav-icon">🚗</span> Vehicles
+        </a>
+        <a href="#fuel" class="nav-link" data-page="fuel">
+          <span class="nav-icon">⛽</span> Add Fuel
+        </a>
+        <a href="#records" class="nav-link" data-page="records">
+          <span class="nav-icon">📋</span> Records
+        </a>
+
+        <div class="nav-section-title">Insights</div>
+        <a href="#alerts" class="nav-link" data-page="alerts">
+          <span class="nav-icon">🚨</span> Alerts
+        </a>
+        <a href="#reports" class="nav-link" data-page="reports">
+          <span class="nav-icon">📤</span> Reports
+        </a>
+        <a href="#reminders" class="nav-link" data-page="reminders">
+          <span class="nav-icon">🔔</span> Reminders
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="#" class="nav-link" id="logoutBtn">
+          <span class="nav-icon">🚪</span> Logout
+        </a>
+      </div>
+    </aside>
+
+    <!-- Sidebar Overlay (mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- ═══════════════ TOP HEADER ═══════════════ -->
+    <header class="top-header" id="topHeader">
+      <div class="header-left">
+        <button class="menu-toggle btn-icon" id="menuToggle" aria-label="Toggle menu">☰</button>
+        <div class="header-greeting">
+          Hello, <strong id="headerUserName">User</strong> 👋
+        </div>
+      </div>
+      <div class="header-right">
+        <select class="form-input" id="globalVehicleSelect" style="width:auto;min-width:150px;padding:6px 32px 6px 12px;font-size:0.8125rem;">
+          <option value="all">All Vehicles</option>
+        </select>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">🌙</button>
+        <div style="position:relative;" id="avatarContainer">
+          <div class="user-avatar" id="userAvatar" title="Profile" style="cursor:pointer;">U</div>
+          
+          <!-- Profile Dropdown -->
+          <div class="profile-dropdown card slide-up" id="profileDropdown" style="display:none; position:absolute; right:0; top:calc(100% + var(--space-2)); width:260px; z-index:100; padding:var(--space-4);">
+            <div style="display:flex; align-items:center; gap:var(--space-3); margin-bottom:var(--space-4); border-bottom:1px solid var(--border-color); padding-bottom:var(--space-3);">
+              <div class="user-avatar" style="width:48px; height:48px; font-size:1.5rem;" id="dropdownAvatar">U</div>
+              <div style="overflow:hidden;">
+                <div style="font-weight:600; font-family:var(--font-heading); white-space:nowrap; text-overflow:ellipsis; overflow:hidden;" id="dropdownName">User Name</div>
+                <div style="font-size:var(--text-xs); color:var(--text-secondary); white-space:nowrap; text-overflow:ellipsis; overflow:hidden;" id="dropdownEmail">user@example.com</div>
+              </div>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:var(--space-2); font-size:var(--text-sm);">
+              <span style="color:var(--text-secondary);">Total Vehicles</span>
+              <strong id="dropdownVehiclesCount">0</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:var(--space-4); font-size:var(--text-sm);">
+              <span style="color:var(--text-secondary);">Total Fill-ups</span>
+              <strong id="dropdownFillupsCount">0</strong>
+            </div>
+            <button class="btn btn-ghost" id="editProfileBtn" style="width:100%; justify-content:flex-start; padding:var(--space-2); margin-bottom:var(--space-2); gap:var(--space-2);">
+              <span style="font-size:1.2rem;">✏️</span> Edit Profile
+            </button>
+            <button class="btn btn-ghost" id="dropdownLogoutBtn" style="width:100%; justify-content:flex-start; color:var(--danger-500); padding:var(--space-2); gap:var(--space-2);">
+              <span style="font-size:1.2rem;">🚪</span> Sign Out
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ═══════════════ MAIN CONTENT ═══════════════ -->
+    <main class="main-content">
+      <div class="page-content">
+
+        <!-- ══════ DASHBOARD SECTION ══════ -->
+        <section class="app-section active" id="pageDashboard">
+          <div class="section-header">
+            <h2><span class="icon">📊</span> Dashboard</h2>
+          </div>
+
+          <!-- Speedometer -->
+          <div class="card speedometer-container slide-up" id="speedometerSection">
+            <div class="speedometer-widget" id="speedometerWidget">
+              <svg class="speedometer-svg" viewBox="0 0 280 180">
+                <defs>
+                  <linearGradient id="speedoGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#10b981"/>
+                    <stop offset="50%" stop-color="#fbbf24"/>
+                    <stop offset="100%" stop-color="#f43f5e"/>
+                  </linearGradient>
+                </defs>
+                <!-- background arc -->
+                <path class="speedo-bg-arc" d="M 30 150 A 110 110 0 0 1 250 150"/>
+                <!-- fill arc -->
+                <path class="speedo-fill-arc" id="speedoArc" d="M 30 150 A 110 110 0 0 1 250 150"
+                      stroke-dasharray="345" stroke-dashoffset="345"/>
+                <!-- tick marks rendered by JS -->
+                <g id="speedoTicks"></g>
+                <!-- needle -->
+                <g class="speedo-needle" id="speedoNeedle">
+                  <line x1="140" y1="150" x2="140" y2="50"/>
+                </g>
+                <circle class="speedo-center" cx="140" cy="150" r="8"/>
+                <!-- value -->
+                <text class="speedo-value" id="speedoValue" x="140" y="130">0.0</text>
+                <text class="speedo-unit" x="140" y="148">km/L</text>
+                <text class="speedo-label-text" x="140" y="174">Latest Mileage</text>
+              </svg>
+            </div>
+            <!-- Digital Odometer -->
+            <div class="odometer-display" id="odometerDisplay">
+              <div class="odo-digit">0</div>
+              <div class="odo-digit">0</div>
+              <div class="odo-digit">0</div>
+              <div class="odo-digit">0</div>
+              <div class="odo-digit">0</div>
+              <div class="odo-digit">0</div>
+            </div>
+            <div class="odo-label">Latest Odometer (km)</div>
+          </div>
+
+          <!-- Stat Cards -->
+          <div class="stats-grid" id="statsGrid">
+            <div class="card stat-card blue slide-up">
+              <div class="stat-header">
+                <div>
+                  <div class="stat-label">Total Fuel Cost</div>
+                  <div class="stat-value" id="statTotalCost">₹0</div>
+                </div>
+                <div class="card-icon blue">💰</div>
+              </div>
+            </div>
+            <div class="card stat-card green slide-up">
+              <div class="stat-header">
+                <div>
+                  <div class="stat-label">Total Distance</div>
+                  <div class="stat-value" id="statTotalDistance">0 km</div>
+                </div>
+                <div class="card-icon green">🛣️</div>
+              </div>
+            </div>
+            <div class="card stat-card amber slide-up">
+              <div class="stat-header">
+                <div>
+                  <div class="stat-label">Average Mileage</div>
+                  <div class="stat-value" id="statAvgMileage">0 km/L</div>
+                </div>
+                <div class="card-icon amber">⚡</div>
+              </div>
+            </div>
+            <div class="card stat-card slide-up">
+              <div class="stat-header">
+                <div>
+                  <div class="stat-label">Total Fill-ups</div>
+                  <div class="stat-value" id="statTotalFillups">0</div>
+                </div>
+                <div class="card-icon rose">⛽</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts -->
+          <div class="charts-grid">
+            <div class="card chart-card slide-up">
+              <div class="card-header">
+                <div class="card-title">Fuel Expenses Over Time</div>
+              </div>
+              <div class="chart-wrapper">
+                <canvas id="expenseChart"></canvas>
+              </div>
+            </div>
+            <div class="card chart-card slide-up">
+              <div class="card-header">
+                <div class="card-title">Mileage Trends</div>
+              </div>
+              <div class="chart-wrapper">
+                <canvas id="mileageChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <h4 style="margin-bottom:var(--space-4);">Quick Actions</h4>
+          <div class="quick-actions">
+            <button class="card quick-action-card" onclick="window.location.hash='fuel'">
+              <div class="action-icon">⛽</div>
+              <div>
+                <div class="action-label">Add Fuel Entry</div>
+                <div class="action-desc">Record a new fill-up</div>
+              </div>
+            </button>
+            <button class="card quick-action-card" onclick="window.location.hash='vehicles'">
+              <div class="action-icon" style="background:linear-gradient(135deg,var(--accent-500),var(--accent-600));">🚗</div>
+              <div>
+                <div class="action-label">Manage Vehicles</div>
+                <div class="action-desc">Add or edit vehicles</div>
+              </div>
+            </button>
+            <button class="card quick-action-card" onclick="window.location.hash='reports'">
+              <div class="action-icon" style="background:linear-gradient(135deg,var(--warning-500),var(--warning-600));">📤</div>
+              <div>
+                <div class="action-label">Export Report</div>
+                <div class="action-desc">Download CSV/PDF</div>
+              </div>
+            </button>
+          </div>
+        </section>
+
+        <!-- ══════ VEHICLES SECTION ══════ -->
+        <section class="app-section" id="pageVehicles">
+          <div class="section-header">
+            <h2><span class="icon">🚗</span> My Vehicles</h2>
+            <button class="btn btn-primary" id="addVehicleBtn">+ Add Vehicle</button>
+          </div>
+          <div class="vehicles-grid" id="vehiclesGrid">
+            <div class="empty-state" id="vehiclesEmpty">
+              <div class="empty-icon">🚗</div>
+              <h3>No vehicles yet</h3>
+              <p>Add your first vehicle to start tracking fuel</p>
+              <button class="btn btn-primary" id="addVehicleEmptyBtn">+ Add Vehicle</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ══════ ADD FUEL SECTION ══════ -->
+        <section class="app-section" id="pageFuel">
+          <div class="section-header">
+            <h2><span class="icon">⛽</span> Add Fuel Entry</h2>
+          </div>
+          <div class="card fuel-form-card slide-up">
+            <form id="fuelForm">
+              <div class="form-group">
+                <label class="form-label">Vehicle</label>
+                <select class="form-input" id="fuelVehicleSelect" required>
+                  <option value="">Select a vehicle</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Date</label>
+                  <input type="date" class="form-input" id="fuelDate" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Odometer Reading (km)</label>
+                  <input type="number" class="form-input" id="fuelOdometer" placeholder="e.g. 45230" min="0" required>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Liters Filled</label>
+                  <input type="number" class="form-input" id="fuelLiters" placeholder="e.g. 25" step="0.01" min="0" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Price per Liter (₹)</label>
+                  <input type="number" class="form-input" id="fuelPrice" placeholder="e.g. 102.50" step="0.01" min="0" required>
+                </div>
+              </div>
+
+              <!-- Auto Total Cost -->
+              <div class="total-cost-display">
+                <span class="total-label">Total Cost</span>
+                <span class="total-value" id="fuelTotalCost">₹0.00</span>
+              </div>
+
+              <!-- Auto Calculations -->
+              <div class="auto-calc-display" id="autoCalcDisplay" style="display:none;">
+                <h4>⚡ Auto Calculations</h4>
+                <div class="calc-grid">
+                  <div class="calc-item">
+                    <div class="calc-value" id="calcDistance">—</div>
+                    <div class="calc-label">Distance (km)</div>
+                  </div>
+                  <div class="calc-item">
+                    <div class="calc-value" id="calcMileage">—</div>
+                    <div class="calc-label">Mileage (km/L)</div>
+                  </div>
+                  <div class="calc-item">
+                    <div class="calc-value" id="calcCostPerKm">—</div>
+                    <div class="calc-label">Cost/km (₹)</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="modal-actions" style="border:none;padding-top:var(--space-4);">
+                <button type="reset" class="btn btn-ghost">Clear</button>
+                <button type="submit" class="btn btn-primary btn-lg">💾 Save Entry</button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- ══════ RECORDS SECTION ══════ -->
+        <section class="app-section" id="pageRecords">
+          <div class="section-header">
+            <h2><span class="icon">📋</span> Fuel Records</h2>
+          </div>
+          <div class="filter-bar">
+            <select class="form-input" id="recordsVehicleFilter">
+              <option value="all">All Vehicles</option>
+            </select>
+            <input type="date" class="form-input" id="recordsDateFrom" title="From date">
+            <input type="date" class="form-input" id="recordsDateTo" title="To date">
+            <button class="btn btn-ghost btn-sm" id="clearFiltersBtn">Clear Filters</button>
+          </div>
+          <div class="table-container" id="recordsTableContainer">
+            <table class="data-table" id="recordsTable">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Vehicle</th>
+                  <th>Fuel</th>
+                  <th>Liters</th>
+                  <th>Price/L</th>
+                  <th>Total</th>
+                  <th>Odometer</th>
+                  <th>Distance</th>
+                  <th>Mileage</th>
+                  <th>Cost/km</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="recordsBody">
+              </tbody>
+            </table>
+          </div>
+          <div class="empty-state" id="recordsEmpty" style="display:none;">
+            <div class="empty-icon">📋</div>
+            <h3>No fuel records</h3>
+            <p>Start by adding a fuel entry</p>
+          </div>
+        </section>
+
+        <!-- ══════ ALERTS SECTION ══════ -->
+        <section class="app-section" id="pageAlerts">
+          <div class="section-header">
+            <h2><span class="icon">🚨</span> Alerts & Insights</h2>
+          </div>
+          <div id="alertsList">
+            <div class="empty-state" id="alertsEmpty">
+              <div class="empty-icon">✅</div>
+              <h3>All clear!</h3>
+              <p>No alerts right now. Keep fueling efficiently!</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ══════ REPORTS SECTION ══════ -->
+        <section class="app-section" id="pageReports">
+          <div class="section-header">
+            <h2><span class="icon">📤</span> Reports & Export</h2>
+          </div>
+          <div class="stats-grid" style="margin-bottom:var(--space-8);">
+            <div class="card quick-action-card" id="exportCsvBtn" style="cursor:pointer;">
+              <div class="action-icon" style="background:linear-gradient(135deg,var(--accent-500),var(--accent-600));">📄</div>
+              <div>
+                <div class="action-label">Export as CSV</div>
+                <div class="action-desc">Download spreadsheet data</div>
+              </div>
+            </div>
+            <div class="card quick-action-card" id="exportPdfBtn" style="cursor:pointer;">
+              <div class="action-icon" style="background:linear-gradient(135deg,var(--danger-500),var(--danger-600));">📑</div>
+              <div>
+                <div class="action-label">Export as PDF</div>
+                <div class="action-desc">Download formatted report</div>
+              </div>
+            </div>
+          </div>
+          <h4 style="margin-bottom:var(--space-4);">Monthly Summary</h4>
+          <div id="monthlySummaryContainer">
+            <div class="empty-state">
+              <div class="empty-icon">📊</div>
+              <h3>No data yet</h3>
+              <p>Add fuel entries to see your monthly summary</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ══════ REMINDERS SECTION ══════ -->
+        <section class="app-section" id="pageReminders">
+          <div class="section-header">
+            <h2><span class="icon">🔔</span> Service Reminders</h2>
+            <button class="btn btn-primary" id="addReminderBtn">+ Add Reminder</button>
+          </div>
+          <div id="remindersList">
+            <div class="empty-state" id="remindersEmpty">
+              <div class="empty-icon">🔔</div>
+              <h3>No reminders set</h3>
+              <p>Add a service reminder to get notified at specific km intervals</p>
+              <button class="btn btn-primary" id="addReminderEmptyBtn">+ Add Reminder</button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- ═══════════════ MOBILE NAV ═══════════════ -->
+    <nav class="mobile-nav">
+      <div class="mobile-nav-inner">
+        <a href="#dashboard" class="mobile-nav-btn active" data-page="dashboard">
+          <span class="mobile-nav-icon">📊</span> Home
+        </a>
+        <a href="#vehicles" class="mobile-nav-btn" data-page="vehicles">
+          <span class="mobile-nav-icon">🚗</span> Cars
+        </a>
+        <a href="#fuel" class="mobile-nav-btn" data-page="fuel">
+          <span class="mobile-nav-icon">⛽</span> Fuel
+        </a>
+        <a href="#records" class="mobile-nav-btn" data-page="records">
+          <span class="mobile-nav-icon">📋</span> Logs
+        </a>
+        <a href="#alerts" class="mobile-nav-btn" data-page="alerts">
+          <span class="mobile-nav-icon">🚨</span> Alerts
+        </a>
+      </div>
+    </nav>
+  </div>
+
+  <!-- ═══════════════ MODALS ═══════════════ -->
+
+  <!-- Vehicle Modal -->
+  <div class="modal-overlay" id="vehicleModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="vehicleModalTitle">Add Vehicle</h3>
+        <button class="modal-close" id="vehicleModalClose">✕</button>
+      </div>
+      <form id="vehicleForm">
+        <input type="hidden" id="vehicleEditId">
+        <div class="form-group">
+          <label class="form-label">Vehicle Name</label>
+          <input type="text" class="form-input" id="vehicleName" placeholder="e.g. My Swift" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Vehicle Number</label>
+          <input type="text" class="form-input" id="vehicleNumber" placeholder="e.g. KA-01-AB-1234" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fuel Type</label>
+          <div class="toggle-group" id="fuelTypeToggle">
+            <div class="toggle-option active" data-value="Petrol">⛽ Petrol</div>
+            <div class="toggle-option" data-value="Diesel">🛢️ Diesel</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tank Capacity (liters) <span style="color:var(--text-tertiary)">(optional)</span></label>
+          <input type="number" class="form-input" id="vehicleTankCapacity" placeholder="e.g. 37" min="0" step="0.1">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="vehicleCancelBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary">💾 Save Vehicle</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Fuel Log Modal -->
+  <div class="modal-overlay" id="editFuelModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Edit Fuel Entry</h3>
+        <button class="modal-close" id="editFuelModalClose">✕</button>
+      </div>
+      <form id="editFuelForm">
+        <input type="hidden" id="editFuelLogId">
+        <input type="hidden" id="editFuelVehicleId">
+        <div class="form-group">
+          <label class="form-label">Date</label>
+          <input type="date" class="form-input" id="editFuelDate" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Liters</label>
+            <input type="number" class="form-input" id="editFuelLiters" step="0.01" min="0" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Price/L (₹)</label>
+            <input type="number" class="form-input" id="editFuelPrice" step="0.01" min="0" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Odometer (km)</label>
+          <input type="number" class="form-input" id="editFuelOdometer" min="0" required>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="editFuelCancelBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary">💾 Update</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Reminder Modal -->
+  <div class="modal-overlay" id="reminderModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Add Service Reminder</h3>
+        <button class="modal-close" id="reminderModalClose">✕</button>
+      </div>
+      <form id="reminderForm">
+        <div class="form-group">
+          <label class="form-label">Vehicle</label>
+          <select class="form-input" id="reminderVehicleSelect" required>
+            <option value="">Select vehicle</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Service Type</label>
+          <input type="text" class="form-input" id="reminderType" placeholder="e.g. Oil Change, Tire Rotation" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Remind at every (km)</label>
+          <input type="number" class="form-input" id="reminderKm" placeholder="e.g. 5000" min="100" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Last Service Odometer (km)</label>
+          <input type="number" class="form-input" id="reminderLastKm" placeholder="e.g. 40000" min="0" required>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="reminderCancelBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary">💾 Save Reminder</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Profile Modal -->
+  <div class="modal-overlay" id="profileModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Edit Profile</h3>
+        <button class="modal-close" id="profileModalClose">✕</button>
+      </div>
+      <form id="profileForm">
+        <div class="form-group" style="text-align:center;">
+          <div class="user-avatar" id="modalAvatarPreview" style="margin:0 auto var(--space-4); width:80px; height:80px; font-size:2.5rem; cursor:default;">U</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input type="text" class="form-input" id="profileName" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Profile Picture URL <span style="color:var(--text-tertiary)">(optional)</span></label>
+          <input type="url" class="form-input" id="profilePicUrl" placeholder="https://example.com/photo.jpg">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="profileCancelBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary">💾 Save Profile</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+  <!-- jsPDF for PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+  <!-- App Scripts -->
+  <script src="js/firebase-config.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/vehicles.js"></script>
+  <script src="js/fuel.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/records.js"></script>
+  <script src="js/alerts.js"></script>
+  <script src="js/speedometer.js"></script>
+  <script src="js/export.js"></script>
+  <script src="js/reminders.js"></script>
+</body>
+</html>

@@ -1,0 +1,215 @@
+/* ============================================
+   FuelOdo - Auth Page Styles
+   ============================================ */
+
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Background decoration */
+.auth-page::before {
+  content: '';
+  position: absolute;
+  width: 600px; height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(59,91,255,0.12), transparent 70%);
+  top: -200px; right: -200px;
+  pointer-events: none;
+}
+
+.auth-page::after {
+  content: '';
+  position: absolute;
+  width: 400px; height: 400px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(16,185,129,0.1), transparent 70%);
+  bottom: -150px; left: -100px;
+  pointer-events: none;
+}
+
+.auth-container {
+  width: 100%;
+  max-width: 420px;
+  padding: var(--space-8);
+  animation: slideUp 0.6s ease-out;
+  position: relative;
+  z-index: 1;
+}
+
+.auth-card {
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-2xl);
+  padding: var(--space-10);
+  box-shadow: var(--shadow-xl);
+}
+
+.auth-logo {
+  text-align: center;
+  margin-bottom: var(--space-8);
+}
+
+.auth-logo .logo-icon {
+  font-size: 3.5rem;
+  margin-bottom: var(--space-3);
+  display: block;
+}
+
+.auth-logo h1 {
+  font-size: var(--text-2xl);
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.auth-logo p {
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+  margin-top: var(--space-1);
+}
+
+.auth-step {
+  display: none;
+}
+
+.auth-step.active {
+  display: block;
+  animation: fadeIn var(--transition-base) ease-out;
+}
+
+.auth-step h3 {
+  font-size: var(--text-lg);
+  margin-bottom: var(--space-2);
+  text-align: center;
+}
+
+.auth-step p {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  text-align: center;
+  margin-bottom: var(--space-6);
+}
+
+/* ── Auth Tabs ── */
+.auth-tabs {
+  display: flex;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-full);
+  padding: 3px;
+  margin-bottom: var(--space-6);
+  border: 1px solid var(--border-color);
+}
+
+.auth-tab {
+  flex: 1;
+  padding: var(--space-3) var(--space-4);
+  text-align: center;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: var(--radius-full);
+  transition: all var(--transition-fast);
+}
+
+.auth-tab.active {
+  color: white;
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+  box-shadow: 0 2px 8px rgba(59, 91, 255, 0.3);
+}
+
+/* ── Auth Divider ── */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin: var(--space-6) 0;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-color);
+}
+
+.auth-divider span {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+/* ── Google Button ── */
+.btn-google {
+  background: var(--bg-tertiary);
+  border: 1.5px solid var(--border-strong);
+  color: var(--text-primary);
+  font-weight: 600;
+  gap: var(--space-3);
+  transition: all var(--transition-fast);
+}
+
+.btn-google:hover {
+  background: var(--bg-glass-hover);
+  border-color: var(--primary-400);
+  box-shadow: 0 2px 12px rgba(59, 91, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.btn-google svg {
+  flex-shrink: 0;
+}
+
+/* ── Forgot Password ── */
+.forgot-link {
+  text-align: center;
+  margin-top: var(--space-3);
+}
+
+.forgot-link button {
+  font-size: var(--text-sm);
+  color: var(--primary-500);
+  font-weight: 500;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.forgot-link button:hover {
+  color: var(--primary-600);
+  text-decoration: underline;
+}
+
+.auth-btn {
+  width: 100%;
+  padding: var(--space-4);
+  font-size: var(--text-base);
+  margin-top: var(--space-4);
+}
+
+.auth-footer {
+  text-align: center;
+  margin-top: var(--space-6);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--border-color);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+/* Theme toggle on auth page */
+.auth-theme-toggle {
+  position: fixed;
+  top: var(--space-6);
+  right: var(--space-6);
+  z-index: 10;
+}

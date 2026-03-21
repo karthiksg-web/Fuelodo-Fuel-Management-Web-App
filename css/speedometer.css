@@ -1,0 +1,120 @@
+/* ============================================
+   FuelOdo - Speedometer Widget
+   ============================================ */
+
+.speedometer-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-8);
+}
+
+.speedometer-widget {
+  position: relative;
+  width: 280px;
+  height: 180px;
+}
+
+.speedometer-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.speedo-bg-arc {
+  fill: none;
+  stroke: var(--border-color);
+  stroke-width: 18;
+  stroke-linecap: round;
+}
+
+.speedo-fill-arc {
+  fill: none;
+  stroke-width: 18;
+  stroke-linecap: round;
+  stroke: url(#speedoGradient);
+  transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.speedo-needle {
+  transform-origin: 140px 150px;
+  transition: transform 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.speedo-needle line {
+  stroke: var(--danger-500);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.speedo-center {
+  fill: var(--text-primary);
+}
+
+.speedo-value {
+  font-family: var(--font-mono);
+  font-size: 2rem;
+  font-weight: 700;
+  fill: var(--text-primary);
+  text-anchor: middle;
+}
+
+.speedo-unit {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  fill: var(--text-tertiary);
+  text-anchor: middle;
+}
+
+.speedo-label-text {
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  fill: var(--text-tertiary);
+  text-anchor: middle;
+}
+
+.speedo-tick-text {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  fill: var(--text-tertiary);
+  text-anchor: middle;
+}
+
+/* ── Digital Odometer ── */
+.odometer-display {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: center;
+  margin-top: var(--space-6);
+  padding: var(--space-4) var(--space-6);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+}
+
+.odo-digit {
+  width: 36px; height: 48px;
+  background: #0f172a;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: #34d399;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.3);
+}
+
+[data-theme="dark"] .odo-digit {
+  background: #000;
+}
+
+.odo-label {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  text-align: center;
+  margin-top: var(--space-2);
+  font-weight: 500;
+}
