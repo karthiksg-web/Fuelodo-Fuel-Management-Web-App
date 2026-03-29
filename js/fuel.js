@@ -125,6 +125,12 @@
           .collection('vehicles').doc(vehicleId)
           .collection('fuelLogs').add(data);
 
+        window.logAppEvent('fuel_added', { 
+          vehicle_id: vehicleId,
+          liters: liters,
+          total_cost: totalCost
+        });
+
         showToast('Fuel entry saved!', 'success');
         form.reset();
         dateInput.value = new Date().toISOString().split('T')[0];

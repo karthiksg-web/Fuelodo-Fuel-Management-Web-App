@@ -20,6 +20,40 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
+// Initialize Analytics & define global logging helper
+let analytics = null;
+if (typeof window !== "undefined" && firebase.analytics) {
+  try {
+    analytics = firebase.analytics();
+    console.log("[Analytics] Firebase Analytics initialized successfully.");
+  } catch (err) {
+    console.error("[Analytics] Firebase Analytics initialization failed:", err);
+  }
+}
+
+// Global helper for logging custom events
+window.logAppEvent = function(eventName, params = {}) {
+  // Always log to console for debugging
+  console.log(`[Analytics] Event: ${eventName}`, params);
+  
+  if (analytics) {
+    try {
+      analytics.logEvent(eventName, params);
+    } catch (err) {
+      console.warn(`[Analytics] Failed to log event ${eventName}:`, err);
+    }
+  } else {
+    console.warn(`[Analytics] Event ${eventName} skipped: Analytics not loaded or not in browser.`);
+  }
+};
+
+// Log initial page view
+window.logAppEvent('page_view', {
+  page_title: document.title,
+  page_location: window.location.href,
+  page_path: window.location.pathname
+});
+
 // Helper to get current user's UID
 function getCurrentUid() {
   return auth.currentUser ? auth.currentUser.uid : null;

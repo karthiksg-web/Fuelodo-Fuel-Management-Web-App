@@ -187,6 +187,54 @@ const AppState = {
       await auth.signOut();
       window.location.href = 'index.html';
     });
+
+    // Delete Account
+    const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+    if (deleteAccountBtn) {
+      deleteAccountBtn.addEventListener('click', async () => {
+        if (!confirm('Are you absolutely sure you want to delete your account? All your vehicles, logs, and data will be permanently wiped. This cannot be undone.')) {
+          return;
+        }
+
+        const user = auth.currentUser;
+        if (!user) return;
+
+        try {
+          deleteAccountBtn.innerHTML = '<span class="spinner"></span> Deleting...';
+          deleteAccountBtn.disabled = true;
+
+          // 1. Unsubscribe listeners
+          AppState.listeners.forEach(unsub => unsub());
+
+          // 2. Delete main User doc
+          try {
+            await db.collection('users').doc(user.uid).delete();
+          } catch(e) {
+            console.warn('Could not delete user document:', e);
+          }
+          
+          // 3. Delete from Firebase Auth
+          await user.delete();
+
+          if (typeof window.logAppEvent === 'function') {
+            window.logAppEvent('user_deleted');
+          }
+          window.location.href = 'index.html';
+        } catch (error) {
+          console.error('Delete account error:', error);
+          if (error.code === 'auth/requires-recent-login') {
+            alert('For security reasons, please log out and log back in before deleting your account.');
+            await auth.signOut();
+            window.location.href = 'index.html';
+          } else {
+            alert(`Failed to delete account: ${error.message}`);
+          }
+        } finally {
+          deleteAccountBtn.innerHTML = '<span style="font-size:1.2rem;">🗑️</span> Delete Account';
+          deleteAccountBtn.disabled = false;
+        }
+      });
+    }
   }
 
   // ── Edit Profile Modal ──
@@ -289,6 +337,8 @@ const AppState = {
         updateVehicleSelectors();
         // Render vehicles page
         if (typeof renderVehicles === 'function') renderVehicles();
+        // Render reminders (ensure names show up)
+        if (typeof loadReminders === 'function') loadReminders();
         // Load all fuel logs
         loadAllFuelLogs();
       }, err => {
@@ -367,6 +417,7 @@ const AppState = {
     if (hash === 'records' && typeof loadRecords === 'function') loadRecords();
     if (hash === 'alerts' && typeof loadAlerts === 'function') loadAlerts();
     if (hash === 'reports' && typeof loadMonthlySummary === 'function') loadMonthlySummary();
+    if (hash === 'reminders' && typeof loadReminders === 'function') loadReminders();
   }
 
   // ── Update Vehicle Selectors ──

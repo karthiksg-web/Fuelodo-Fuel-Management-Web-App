@@ -88,6 +88,14 @@ window.initDashboard = function() {
   // ── Charts ──
   renderExpenseChart(logs);
   renderMileageChart(logs, byVehicle);
+
+  // ── Save Dashboard Snapshot (For Demo / Caching) ──
+  saveDashboardSnapshot({
+    totalCost,
+    totalDistance,
+    avgMileage: formatNumber(avgMileage),
+    totalFillups: logs.length
+  });
 };
 
 function renderExpenseChart(logs) {
@@ -249,4 +257,21 @@ function renderMileageChart(logs, byVehicle) {
       }
     }
   });
+}
+
+// ── Save Dashboard Snapshot ──
+async function saveDashboardSnapshot(stats) {
+  const user = firebase.auth().currentUser;
+  // Ensure we are logged in and db exists
+  if (!user || typeof db === 'undefined') return;
+
+  try {
+    const docRef = db.collection('users').doc(user.uid).collection('dashboardRecords').doc('latest_summary');
+    await docRef.set({
+      ...stats,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+  } catch (err) {
+    console.warn('Failed to sync dashboard snapshot:', err);
+  }
 }

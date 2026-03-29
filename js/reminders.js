@@ -95,7 +95,7 @@
 
       snap.forEach(doc => {
         const r = doc.data();
-        const vehicle = AppState.vehicles.find(v => v.id === r.vehicleId);
+        const vehicle = AppState.vehicles.find(v => String(v.id) === String(r.vehicleId));
         const vName = vehicle ? vehicle.name : 'Unknown Vehicle';
 
         // Get latest odometer for this vehicle
@@ -107,8 +107,12 @@
           return da - db2;
         });
 
-        const currentOdo = vLogs.length > 0 ? (vLogs[vLogs.length - 1].odometer || 0) : 0;
-        const nextServiceKm = r.lastServiceKm + r.intervalKm;
+        let currentOdo = vLogs.length > 0 ? (Number(vLogs[vLogs.length - 1].odometer) || 0) : 0;
+        const lastKm = Number(r.lastServiceKm) || 0;
+        const interval = Number(r.intervalKm) || 0;
+        
+        currentOdo = Math.max(currentOdo, lastKm);
+        const nextServiceKm = lastKm + interval;
         const kmRemaining = nextServiceKm - currentOdo;
         const isDue = kmRemaining <= 0;
         const isNear = kmRemaining > 0 && kmRemaining <= 500;
@@ -138,10 +142,10 @@
                   <strong>${vName}</strong> · Every ${r.intervalKm.toLocaleString()} km
                 </div>
                 <div style="font-size:var(--text-sm);color:var(--text-secondary);">
-                  Last service: ${r.lastServiceKm.toLocaleString()} km · 
+                  Last service: ${lastKm.toLocaleString()} km · 
                   Next: ${nextServiceKm.toLocaleString()} km · 
                   ${isDue ? `<span style="color:var(--danger-500);font-weight:600;">Overdue by ${Math.abs(kmRemaining).toLocaleString()} km</span>` :
-                    `<span>${kmRemaining.toLocaleString()} km remaining</span>`}
+                    `<span>${kmRemaining.toLocaleString()} km left to service</span>`}
                 </div>
               </div>
               <button class="btn btn-ghost btn-icon btn-sm" onclick="deleteReminder('${doc.id}')" title="Delete">🗑️</button>

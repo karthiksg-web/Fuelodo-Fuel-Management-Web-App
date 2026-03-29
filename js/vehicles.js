@@ -84,11 +84,13 @@
         if (editId) {
           // Update
           await db.collection('users').doc(uid).collection('vehicles').doc(editId).update(data);
+          window.logAppEvent('vehicle_updated', { fuel_type: fuelType });
           showToast('Vehicle updated!', 'success');
         } else {
           // Create
           data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
           await db.collection('users').doc(uid).collection('vehicles').add(data);
+          window.logAppEvent('vehicle_created', { fuel_type: fuelType });
           showToast('Vehicle added!', 'success');
         }
         closeVehicleModal();
@@ -152,6 +154,7 @@
       const totalLiters = logs.reduce((sum, l) => sum + (l.liters || 0), 0);
       
       let totalDistance = 0;
+      let latestOdo = 0;
       let totalMileage = 0;
       let mileageCount = 0;
       
@@ -162,6 +165,8 @@
           const db = b.date?.toDate ? b.date.toDate().getTime() : new Date(b.date).getTime();
           return da - db;
         });
+
+        latestOdo = logs[logs.length - 1].odometer || 0;
 
         for (let i = 1; i < logs.length; i++) {
           const dist = (logs[i].odometer || 0) - (logs[i-1].odometer || 0);
@@ -206,8 +211,8 @@
             <div class="stat-lbl">Total Spent</div>
           </div>
           <div class="vehicle-stat">
-            <div class="stat-val">${totalDistance.toLocaleString()}</div>
-            <div class="stat-lbl">Total km</div>
+            <div class="stat-val">${latestOdo.toLocaleString()}</div>
+            <div class="stat-lbl">Odometer</div>
           </div>
           <div class="vehicle-stat">
             <div class="stat-val">${logs.length}</div>

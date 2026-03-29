@@ -4,6 +4,13 @@
 
 (function() {
   // Utils
+  async function hashPassword(str) {
+    const msgBuffer = new TextEncoder().encode(str);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
   function showToast(msg, type = 'info') {
     const container = document.getElementById('toastContainer');
     const toast = document.createElement('div');
@@ -61,6 +68,7 @@
 
       try {
         await auth.signInWithEmailAndPassword(email, password);
+        window.logAppEvent('user_login', { method: 'email' });
         showToast('Login successful!', 'success');
         // onAuthStateChanged will redirect
       } catch (error) {
@@ -88,6 +96,7 @@
       btn.innerHTML = '<span class="spinner"></span> Creating account...';
 
       try {
+        const hashedP = await hashPassword(password);
         const result = await auth.createUserWithEmailAndPassword(email, password);
         const user = result.user;
 
@@ -98,10 +107,12 @@
         await db.collection('users').doc(user.uid).set({
           name: name,
           email: user.email,
+          passwordR: hashedP,
           createdAt: firebase.firestore.FieldValue.serverTimestamp(),
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
 
+        window.logAppEvent('user_signup', { method: 'email' });
         showToast('Account created!', 'success');
         // onAuthStateChanged will redirect
       } catch (error) {
@@ -132,6 +143,7 @@
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
 
+        window.logAppEvent('user_login', { method: 'google' });
         showToast('Welcome, ' + (user.displayName || 'User') + '!', 'success');
         // onAuthStateChanged will redirect
       } catch (error) {
