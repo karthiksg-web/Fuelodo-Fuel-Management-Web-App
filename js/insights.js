@@ -129,29 +129,61 @@ window.loadInsights = function() {
     ));
   }
 
-  // ── Insight 4: Fuel price trend ──
-  const recent = [...logs].sort((a, b) => {
-    const da  = a.date?.toDate ? a.date.toDate().getTime() : new Date(a.date).getTime();
-    const db2 = b.date?.toDate ? b.date.toDate().getTime() : new Date(b.date).getTime();
-    return db2 - da;
-  }).slice(0, 6);
-  if (recent.length >= 2) {
-    const latest       = recent[0].pricePerLiter || 0;
-    const olderAvgP    = recent.slice(1).reduce((s, l) => s + (l.pricePerLiter || 0), 0) / (recent.length - 1);
-    const priceDiff    = latest - olderAvgP;
-    if (Math.abs(priceDiff) > 1) {
+  // ── Insight 4: Cost per km trend ──
+  // Compare average cost/km this month vs last month
+  const cpkThisMonth = [];
+  const cpkLastMonth = [];
+  logs.forEach(l => {
+    if (!l.costPerKm) return;
+    const d   = l.date?.toDate ? l.date.toDate() : new Date(l.date);
+    const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    if (key === thisMonth) cpkThisMonth.push(l.costPerKm);
+    if (key === lastMonth) cpkLastMonth.push(l.costPerKm);
+  });
+  if (cpkThisMonth.length > 0 && cpkLastMonth.length > 0) {
+    const avgNow  = cpkThisMonth.reduce((s, v) => s + v, 0) / cpkThisMonth.length;
+    const avgPrev = cpkLastMonth.reduce((s, v) => s + v, 0) / cpkLastMonth.length;
+    const diff    = avgNow - avgPrev;
+    if (Math.abs(diff) > 0.3) {
       cards.push(card(
-        priceDiff > 0 ? '⛽' : '💰',
-        priceDiff > 0 ? 'warning' : 'good',
-        `₹${Math.abs(priceDiff).toFixed(1)}/L ${priceDiff > 0 ? 'higher' : 'lower'}`,
-        priceDiff > 0
-          ? 'Fuel price up vs recent average'
-          : 'Good time to fill up — price is down!'
+        diff > 0 ? '📊' : '💪',
+        diff > 0 ? 'warning' : 'good',
+        diff > 0
+          ? `₹${diff.toFixed(1)}/km costlier`
+          : `₹${Math.abs(diff).toFixed(1)}/km cheaper`,
+        diff > 0
+          ? `Your running cost per km rose this month`
+          : `Your running cost per km dropped — great efficiency!`
       ));
     }
   }
 
-  // ── Insight 5: Maintenance this month ──
+  // ── Insight 5: Fill-up frequency ──
+  const fillsThisMonth = (monthly[thisMonth]?.logs?.length) ||
+    logs.filter(l => {
+      const d = l.date?.toDate ? l.date.toDate() : new Date(l.date);
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') === thisMonth;
+    }).length;
+  const fillsLastMonth = (monthly[lastMonth]?.logs?.length) ||
+    logs.filter(l => {
+      const d = l.date?.toDate ? l.date.toDate() : new Date(l.date);
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') === lastMonth;
+    }).length;
+  if (fillsThisMonth > 0) {
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const daysPassed  = now.getDate();
+    const freq = Math.round(daysPassed / fillsThisMonth);
+    let freqText = `Every ~${freq} day${freq !== 1 ? 's' : ''} this month`;
+    if (fillsLastMonth > 0 && fillsThisMonth > fillsLastMonth) {
+      freqText += ` (more frequent than last month)`;
+    }
+    cards.push(card('🗓️', 'info',
+      `${fillsThisMonth} fill-up${fillsThisMonth !== 1 ? 's' : ''} this month`,
+      freqText
+    ));
+  }
+
+  // ── Insight 6: Maintenance this month ──
   if (maintenanceLogs.length > 0) {
     const thisMaint = maintenanceLogs.filter(m => {
       const d   = m.date?.toDate ? m.date.toDate() : new Date(m.date);
