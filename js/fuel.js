@@ -1,11 +1,11 @@
 // ============================================
-// FuelOdo - Fuel Entry System v2
-// Features: Odometer Validation, 300km Anomaly Warning,
-//           Business Mode fields, Debouncing
+// FuelOdo - Fuel Entry System v3
+// Added: Full Tank toggle (isFullTank field)
+// Added: Inline field validation with error messages
+// Fixed: Mileage skipped for partial fills
 // ============================================
 
 (function() {
-  // ── Debounce helper ──
   function debounce(fn, delay) {
     let timer;
     return function(...args) {
@@ -27,12 +27,77 @@
     const calcCostPerKm = document.getElementById('calcCostPerKm');
     const dateInput = document.getElementById('fuelDate');
     const odomWarning = document.getElementById('odomWarning');
-
-    // Business Mode elements (will show/hide based on mode)
+    const fullTankToggle = document.getElementById('fullTankToggle');
     const businessFields = document.getElementById('businessFields');
+
+    if (!form) return;
 
     // Set default date to today
     dateInput.value = new Date().toISOString().split('T')[0];
+
+    // ── Show/hide business fields ──
+    function updateBusinessFields() {
+      if (businessFields) {
+        businessFields.style.display = AppState.businessMode ? '' : 'none';
+      }
+    }
+    updateBusinessFields();
+
+    // ── Inline validation helpers ──
+    function showFieldError(input, message) {
+      input.classList.add('input-error');
+      let err = input.parentElement.querySelector('.field-error');
+      if (!err) {
+        err = document.createElement('span');
+        err.className = 'field-error';
+        input.parentElement.appendChild(err);
+      }
+      err.textContent = message;
+    }
+
+    function clearFieldError(input) {
+      input.classList.remove('input-error');
+      const err = input.parentElement.querySelector('.field-error');
+      if (err) err.remove();
+    }
+
+    function validateField(input, rules) {
+      const val = input.value.trim();
+      for (const rule of rules) {
+        if (!rule.check(val, input)) {
+          showFieldError(input, rule.message);
+          return false;
+        }
+      }
+      clearFieldError(input);
+      return true;
+    }
+
+    // Blur validation for each field
+    vehicleSelect.addEventListener('blur', () => {
+      if (!vehicleSelect.value) showFieldError(vehicleSelect, 'Please select a vehicle');
+      else clearFieldError(vehicleSelect);
+    });
+
+    litersInput.addEventListener('blur', () => {
+      const v = parseFloat(litersInput.value);
+      if (!v || v <= 0) showFieldError(litersInput, 'Enter a valid liters amount');
+      else if (v > 500) showFieldError(litersInput, 'Liters seems too high — please verify');
+      else clearFieldError(litersInput);
+    });
+
+    priceInput.addEventListener('blur', () => {
+      const v = parseFloat(priceInput.value);
+      if (!v || v <= 0) showFieldError(priceInput, 'Enter a valid price per liter');
+      else if (v > 500) showFieldError(priceInput, 'Price seems too high — please verify');
+      else clearFieldError(priceInput);
+    });
+
+    odometerInput.addEventListener('blur', () => {
+      const v = parseFloat(odometerInput.value);
+      if (!v || v < 0) showFieldError(odometerInput, 'Enter a valid odometer reading');
+      else clearFieldError(odometerInput);
+    });
 
     // ── Auto-calculate total cost ──
     function updateTotalCost() {
@@ -45,7 +110,7 @@
     litersInput.addEventListener('input', updateTotalCost);
     priceInput.addEventListener('input', updateTotalCost);
 
-    // ── Get previous odometer reading for a vehicle ──
+    // ── Get previous odometer for vehicle ──
     function getPreviousOdometer(vehicleId) {
       let logs = AppState.allFuelLogs.filter(l => l.vehicleId === vehicleId);
       logs.sort((a, b) => {
@@ -54,19 +119,18 @@
         if (da !== db2) return da - db2;
         return (a.odometer || 0) - (b.odometer || 0);
       });
-      if (logs.length === 0) return null;
-      return logs[logs.length - 1].odometer || null;
+      return logs.length > 0 ? (logs[logs.length - 1].odometer || null) : null;
     }
 
-    // ── Auto-calculate distance, mileage, cost/km (debounced) ──
+    // ── Auto-calc distance, mileage, cost/km ──
     const updateAutoCalc = debounce(function() {
       const vehicleId = vehicleSelect.value;
       const odometer = parseFloat(odometerInput.value) || 0;
       const liters = parseFloat(litersInput.value) || 0;
       const price = parseFloat(priceInput.value) || 0;
       const totalCost = liters * price;
+      const isPartialFill = fullTankToggle && !fullTankToggle.checked;
 
-      // Clear previous warnings
       if (odomWarning) odomWarning.style.display = 'none';
       odometerInput.classList.remove('input-error');
 
@@ -77,12 +141,11 @@
 
       const prevOdometer = getPreviousOdometer(vehicleId);
 
-      // Validation: current must be GREATER than previous
       if (prevOdometer !== null) {
         if (odometer <= prevOdometer) {
           odometerInput.classList.add('input-error');
           if (odomWarning) {
-            odomWarning.textContent = `⛔ Odometer must be greater than last reading (${prevOdometer.toLocaleString()} km).`;
+            odomWarning.textContent = `⛔ Must be greater than last reading (${prevOdometer.toLocaleString()} km).`;
             odomWarning.style.display = '';
             odomWarning.className = 'odometer-warning error';
           }
@@ -92,54 +155,75 @@
 
         const distance = odometer - prevOdometer;
 
-        // Anomaly: distance > 300 km
         if (distance > 300 && odomWarning) {
-          odomWarning.textContent = `⚠️ Unusual distance detected: ${distance.toLocaleString()} km since last entry. Please verify.`;
+          odomWarning.textContent = `⚠️ Unusual distance: ${distance.toLocaleString()} km. Please verify.`;
           odomWarning.style.display = '';
           odomWarning.className = 'odometer-warning caution';
         }
 
-        const mileage = liters > 0 ? distance / liters : 0;
-        const costPerKm = distance > 0 ? totalCost / distance : 0;
+        // Show auto-calc only for full tank
+        if (!isPartialFill) {
+          const mileage = liters > 0 ? distance / liters : 0;
+          const costPerKm = distance > 0 ? totalCost / distance : 0;
+          calcDistance.textContent = distance.toLocaleString();
+          calcMileage.textContent = formatNumber(mileage);
+          calcCostPerKm.textContent = formatNumber(costPerKm);
+          autoCalcDisplay.style.display = '';
 
-        calcDistance.textContent = distance.toLocaleString();
-        calcMileage.textContent = formatNumber(mileage);
-        calcCostPerKm.textContent = formatNumber(costPerKm);
-        autoCalcDisplay.style.display = '';
+          // Update partial fill note visibility
+          const partialNote = document.getElementById('partialFillNote');
+          if (partialNote) partialNote.style.display = 'none';
+        } else {
+          // Partial fill: show distance only
+          calcDistance.textContent = distance.toLocaleString();
+          calcMileage.textContent = '—';
+          calcCostPerKm.textContent = '—';
+          autoCalcDisplay.style.display = '';
+
+          const partialNote = document.getElementById('partialFillNote');
+          if (partialNote) partialNote.style.display = '';
+        }
       } else {
         autoCalcDisplay.style.display = 'none';
       }
     }, 300);
 
-    odometerInput.addEventListener('input', () => { updateAutoCalc(); });
+    odometerInput.addEventListener('input', updateAutoCalc);
     litersInput.addEventListener('input', () => { updateTotalCost(); updateAutoCalc(); });
     priceInput.addEventListener('input', () => { updateTotalCost(); updateAutoCalc(); });
     vehicleSelect.addEventListener('change', updateAutoCalc);
+    if (fullTankToggle) fullTankToggle.addEventListener('change', updateAutoCalc);
 
     // ── Save fuel entry ──
-    form.addEventListener('submit', async (e) => {
+    form.addEventListener('submit', async e => {
       e.preventDefault();
+
+      // Full validation before submit
+      let valid = true;
+      if (!vehicleSelect.value) { showFieldError(vehicleSelect, 'Please select a vehicle'); valid = false; }
+      const liters = parseFloat(litersInput.value);
+      if (!liters || liters <= 0) { showFieldError(litersInput, 'Enter a valid liters amount'); valid = false; }
+      const pricePerLiter = parseFloat(priceInput.value);
+      if (!pricePerLiter || pricePerLiter <= 0) { showFieldError(priceInput, 'Enter a valid price per liter'); valid = false; }
+      const odometer = parseFloat(odometerInput.value);
+      if (!odometer || odometer < 0) { showFieldError(odometerInput, 'Enter a valid odometer reading'); valid = false; }
+      if (!dateInput.value) { showFieldError(dateInput, 'Please select a date'); valid = false; }
+      if (!valid) { showToast('Please fix the errors above', 'error'); return; }
 
       const uid = getCurrentUid();
       const vehicleId = vehicleSelect.value;
-
-      if (!uid || !vehicleId) {
-        showToast('Please select a vehicle', 'error');
-        return;
-      }
+      if (!uid || !vehicleId) { showToast('Please select a vehicle', 'error'); return; }
 
       const date = dateInput.value;
-      const liters = parseFloat(litersInput.value);
-      const pricePerLiter = parseFloat(priceInput.value);
-      const odometer = parseFloat(odometerInput.value);
       const totalCost = liters * pricePerLiter;
+      const isFullTank = fullTankToggle ? fullTankToggle.checked : true;
 
-      // ─── Odometer Validation (hard block) ───
+      // Odometer validation
       const prevOdometer = getPreviousOdometer(vehicleId);
       if (prevOdometer !== null && odometer <= prevOdometer) {
         odometerInput.classList.add('input-error');
         if (odomWarning) {
-          odomWarning.textContent = `⛔ Invalid odometer! Current reading (${odometer.toLocaleString()}) must be greater than previous (${prevOdometer.toLocaleString()}).`;
+          odomWarning.textContent = `⛔ Invalid! Must be greater than last reading (${prevOdometer.toLocaleString()}).`;
           odomWarning.style.display = '';
           odomWarning.className = 'odometer-warning error';
         }
@@ -147,25 +231,26 @@
         return;
       }
 
-      // ─── Anomaly: 300 km confirmation ───
       let distance = null;
       let mileage = null;
       let costPerKm = null;
 
       if (prevOdometer !== null && odometer > prevOdometer) {
         distance = odometer - prevOdometer;
-        mileage = distance / liters;
-        costPerKm = totalCost / distance;
 
         if (distance > 300) {
-          const proceed = confirm(
-            `⚠️ Unusual distance detected!\n\nYou've entered ${distance.toLocaleString()} km since the last fill-up. This seems unusually high.\n\nAre you sure? Click OK to save or Cancel to correct.`
-          );
+          const proceed = confirm(`⚠️ Unusual distance detected!\n\nYou've entered ${distance.toLocaleString()} km since the last fill-up.\n\nAre you sure? Click OK to save or Cancel to correct.`);
           if (!proceed) return;
+        }
+
+        // Only calculate mileage for full tank fills
+        if (isFullTank) {
+          mileage = distance / liters;
+          costPerKm = totalCost / distance;
         }
       }
 
-      // ─── Business Mode extra fields ───
+      // Business Mode fields
       const isBusinessMode = AppState.businessMode === true;
       const businessData = {};
       if (isBusinessMode) {
@@ -186,6 +271,7 @@
         distance,
         mileage,
         costPerKm,
+        isFullTank,        // NEW field
         ...businessData,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       };
@@ -200,13 +286,10 @@
           .collection('vehicles').doc(vehicleId)
           .collection('fuelLogs').add(data);
 
-        window.logAppEvent('fuel_added', {
-          vehicle_id: vehicleId,
-          liters,
-          total_cost: totalCost
-        });
+        if (typeof window.logAppEvent === 'function') {
+          window.logAppEvent('fuel_added', { vehicle_id: vehicleId, liters, total_cost: totalCost, is_full_tank: isFullTank });
+        }
 
-        // Trigger notification engine
         if (typeof NotificationSystem !== 'undefined') {
           setTimeout(() => NotificationSystem.runAlertEngine(vehicleId), 1500);
         }
@@ -214,10 +297,17 @@
         showToast('✅ Fuel entry saved!', 'success');
         form.reset();
         dateInput.value = new Date().toISOString().split('T')[0];
+        if (fullTankToggle) fullTankToggle.checked = true; // Reset to full tank default
         totalCostDisplay.textContent = '₹0.00';
         autoCalcDisplay.style.display = 'none';
         if (odomWarning) odomWarning.style.display = 'none';
         odometerInput.classList.remove('input-error');
+        // Clear all field errors
+        form.querySelectorAll('.field-error').forEach(e => e.remove());
+        form.querySelectorAll('.input-error').forEach(e => e.classList.remove('input-error'));
+
+        // Update business fields visibility
+        updateBusinessFields();
       } catch (err) {
         console.error('Save fuel error:', err);
         showToast('Failed to save entry', 'error');
@@ -227,7 +317,6 @@
       }
     });
 
-    // Reset button handler
     form.addEventListener('reset', () => {
       setTimeout(() => {
         totalCostDisplay.textContent = '₹0.00';
@@ -235,6 +324,10 @@
         if (odomWarning) odomWarning.style.display = 'none';
         odometerInput.classList.remove('input-error');
         dateInput.value = new Date().toISOString().split('T')[0];
+        if (fullTankToggle) fullTankToggle.checked = true;
+        form.querySelectorAll('.field-error').forEach(e => e.remove());
+        form.querySelectorAll('.input-error').forEach(e => e.classList.remove('input-error'));
+        updateBusinessFields();
       }, 10);
     });
   });

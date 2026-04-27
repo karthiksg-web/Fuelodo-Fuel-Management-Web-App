@@ -14,6 +14,11 @@
   <link rel="stylesheet" href="css/fuel.css">
   <link rel="stylesheet" href="css/speedometer.css">
   <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="css/map.css">
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
 </head>
 <body>
   <!-- Loading Overlay -->
@@ -42,6 +47,9 @@
         </a>
         <a href="#records" class="nav-link" data-page="records">
           <span class="nav-icon">📋</span> Records
+        </a>
+        <a href="#map" class="nav-link" data-page="map">
+          <span class="nav-icon">🗺️</span> Nearby Stations
         </a>
 
         <div class="nav-section-title">Insights</div>
@@ -157,13 +165,13 @@
 
 
 
-          <!-- Stat Cards -->
+          <!-- Stat Cards: Fuel Cost | Avg Mileage | Distance | Maintenance Cost | Total Expenses -->
           <div class="stats-grid" id="statsGrid">
             <div class="card stat-card blue slide-up">
               <div class="stat-header">
                 <div>
-                  <div class="stat-label">Total Fuel Cost</div>
-                  <div class="stat-value" id="statTotalCost">₹0</div>
+                  <div class="stat-label">Fuel Cost</div>
+                  <div class="stat-value" id="statFuelCost">₹0</div>
                 </div>
                 <div class="card-icon blue">⛽</div>
               </div>
@@ -184,6 +192,15 @@
                   <div class="stat-value" id="statTotalDistance">0 km</div>
                 </div>
                 <div class="card-icon amber">🛣️</div>
+              </div>
+            </div>
+            <div class="card stat-card slide-up">
+              <div class="stat-header">
+                <div>
+                  <div class="stat-label">Maintenance Cost</div>
+                  <div class="stat-value" id="statMaintCost">₹0</div>
+                </div>
+                <div class="card-icon amber">🔧</div>
               </div>
             </div>
             <div class="card stat-card slide-up">
@@ -217,6 +234,12 @@
             </div>
           </div>
 
+          <!-- Smart Insights -->
+          <div class="insights-section">
+            <h4 class="insights-heading">💡 Smart Insights</h4>
+            <div id="insightsContainer" class="insights-container"></div>
+          </div>
+
           <!-- Quick Actions -->
           <h4 style="margin-bottom:var(--space-4);">Quick Actions</h4>
           <div class="quick-actions">
@@ -227,6 +250,13 @@
                 <div class="action-desc">Record a new fill-up</div>
               </div>
             </button>
+            <button class="card quick-action-card" id="addMaintenanceQuickBtn">
+              <div class="action-icon" style="background:linear-gradient(135deg,var(--warning-500),var(--warning-600));">🔧</div>
+              <div>
+                <div class="action-label">Log Maintenance</div>
+                <div class="action-desc">Record a service cost</div>
+              </div>
+            </button>
             <button class="card quick-action-card" onclick="window.location.hash='vehicles'">
               <div class="action-icon" style="background:linear-gradient(135deg,var(--accent-500),var(--accent-600));">🚗</div>
               <div>
@@ -235,7 +265,7 @@
               </div>
             </button>
             <button class="card quick-action-card" onclick="window.location.hash='reports'">
-              <div class="action-icon" style="background:linear-gradient(135deg,var(--warning-500),var(--warning-600));">📤</div>
+              <div class="action-icon" style="background:linear-gradient(135deg,var(--primary-500),var(--primary-600));">📤</div>
               <div>
                 <div class="action-label">Export Report</div>
                 <div class="action-desc">Download CSV/PDF</div>
@@ -338,6 +368,20 @@
                   </div>
                 </div>
               </div>
+
+              <!-- Full Tank Toggle -->
+              <div class="full-tank-row">
+                <label class="full-tank-label">
+                  <span class="full-tank-icon">⛽</span>
+                  <span>Full Tank?</span>
+                </label>
+                <label class="switch">
+                  <input type="checkbox" id="fullTankToggle" checked>
+                  <span class="slider round"></span>
+                </label>
+                <span class="full-tank-hint" id="fullTankHint">Mileage will be calculated</span>
+              </div>
+              <p class="field-note" id="partialFillNote" style="display:none;">⚠️ Partial fill — mileage skipped until next full tank</p>
 
               <div class="modal-actions" style="border:none;padding-top:var(--space-4);">
                 <button type="reset" class="btn btn-ghost">Clear</button>
@@ -448,6 +492,44 @@
             </div>
           </div>
         </section>
+
+        <!-- ══════ MAP SECTION ══════ -->
+        <section class="app-section" id="pageMap">
+          <div class="map-container">
+            <!-- Loading / Error State -->
+            <div class="map-loading" id="mapLoadingState">
+              <div class="map-loading-spinner"></div>
+              <div class="map-loading-text">Initializing map...</div>
+            </div>
+
+            <!-- Leaflet Map -->
+            <div id="fuelMap"></div>
+
+            <!-- Search Bar (manual location search) -->
+            <div class="map-search-container" id="mapSearchContainer"></div>
+
+            <!-- Floating Top Panel: Station Cards -->
+            <div class="map-top-panel" id="mapTopPanel"></div>
+
+            <!-- Floating Controls (unified: zoom + utilities) -->
+            <div class="map-controls">
+              <div class="map-controls-group">
+                <button class="map-control-btn" id="mapZoomInBtn" title="Zoom in">＋</button>
+                <button class="map-control-btn" id="mapZoomOutBtn" title="Zoom out">－</button>
+              </div>
+              <div class="map-controls-group">
+                <button class="map-control-btn" id="mapRecenterBtn" title="Re-center on my location">📍</button>
+                <button class="map-control-btn" id="mapRefreshBtn" title="Refresh stations">🔄</button>
+              </div>
+            </div>
+
+            <!-- Radius Label -->
+            <div class="map-radius-label" id="mapRadiusLabel">
+              <span class="radius-dot"></span>
+              Searching within 5 km
+            </div>
+          </div>
+        </section>
       </div>
     </main>
 
@@ -470,9 +552,9 @@
           <span class="mobile-nav-text" style="margin-top: 8px;">Add Fuel</span>
         </div>
 
-        <a href="#records" class="mobile-nav-btn" data-page="records">
-          <span class="mobile-nav-icon">📋</span>
-          <span class="mobile-nav-text">Records</span>
+        <a href="#map" class="mobile-nav-btn" data-page="map">
+          <span class="mobile-nav-icon">🗺️</span>
+          <span class="mobile-nav-text">Stations</span>
         </a>
         <a href="#more" class="mobile-nav-btn" data-page="more">
           <span class="mobile-nav-icon">⋮</span>
@@ -489,6 +571,9 @@
       <button class="btn-icon" id="closeMoreDrawer">✕</button>
     </div>
     <div class="more-drawer-content">
+      <a href="#records" class="more-item" data-page="records">
+        <span class="more-icon">📋</span> Records
+      </a>
       <a href="#alerts" class="more-item" data-page="alerts">
         <span class="more-icon">🚨</span> Alerts
       </a>
@@ -643,6 +728,46 @@
   <!-- Toast Container -->
   <div class="toast-container" id="toastContainer"></div>
 
+  <!-- Maintenance Modal -->
+  <div class="modal-overlay" id="maintenanceModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">🔧 Log Maintenance</h3>
+        <button class="modal-close" id="maintenanceModalClose">✕</button>
+      </div>
+      <form id="maintenanceForm">
+        <div class="form-group">
+          <label class="form-label">Vehicle</label>
+          <select class="form-input" id="maintVehicleSelect" required>
+            <option value="">Select a vehicle</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Service Type</label>
+          <input type="text" class="form-input" id="maintServiceType" placeholder="e.g. Oil Change, Tire Rotation" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Cost (₹)</label>
+            <input type="number" class="form-input" id="maintCost" placeholder="e.g. 1500" step="0.01" min="0" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date</label>
+            <input type="date" class="form-input" id="maintDate" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes <span style="color:var(--text-tertiary)">(optional)</span></label>
+          <input type="text" class="form-input" id="maintNotes" placeholder="e.g. Replaced engine oil at 45000 km">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="maintenanceCancelBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary">💾 Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
@@ -652,21 +777,28 @@
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
   <!-- jsPDF for PDF export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
   <!-- App Scripts -->
-  <script src="js/firebase-config.js?v=3"></script>
-  <script src="js/notifications.js?v=3"></script>
-  <script src="js/theme.js?v=3"></script>
-  <script src="js/app.js?v=3"></script>
-  <script src="js/vehicles.js?v=3"></script>
-  <script src="js/fuel.js?v=3"></script>
-  <script src="js/dashboard.js?v=3"></script>
-  <script src="js/records.js?v=3"></script>
-  <script src="js/alerts.js?v=3"></script>
-  <script src="js/export.js?v=3"></script>
-  <script src="js/reminders.js?v=3"></script>
+  <script src="js/firebase-config.js?v=4"></script>
+  <script src="js/notifications.js?v=4"></script>
+  <script src="js/theme.js?v=4"></script>
+  <script src="js/app.js?v=4"></script>
+  <script src="js/vehicles.js?v=4"></script>
+  <script src="js/fuel.js?v=4"></script>
+  <script src="js/dashboard.js?v=4"></script>
+  <script src="js/records.js?v=4"></script>
+  <script src="js/alerts.js?v=4"></script>
+  <script src="js/export.js?v=4"></script>
+  <script src="js/reminders.js?v=4"></script>
+  <script src="js/maintenance.js?v=4"></script>
+  <script src="js/insights.js?v=4"></script>
+  <script src="js/map.js?v=4"></script>
 </body>
 </html>

@@ -1,7 +1,8 @@
 // ============================================
-// FuelOdo - Notifications System
-// Firestore schema: users/{userId}/notifications/{notificationId}
-// Fields: type, message, severity, timestamp, read
+// FuelOdo - Notifications System v2
+// Fixed: undefined is OVERDUE bug (reminder.type → reminder.serviceType)
+// Fixed: severity label mapping (alert → Critical)
+// Added: null-safe guards throughout
 // ============================================
 
 const NotificationSystem = (() => {
@@ -36,7 +37,6 @@ const NotificationSystem = (() => {
         console.warn('[Notifications] Listener error:', err);
       });
 
-    // Register with AppState for cleanup
     if (AppState && AppState.listeners) {
       AppState.listeners.push(unsubscribeListener);
     }
@@ -57,16 +57,20 @@ const NotificationSystem = (() => {
     }
 
     list.innerHTML = notificationsCache.map(n => {
-      const icon = getSeverityIcon(n.severity);
-      const cls = getSeverityClass(n.severity);
+      // Safe fallbacks for all fields
+      const severity = n.severity || 'info';
+      const message = n.message || 'New notification';
+      const icon = getSeverityIcon(severity);
+      const cls = getSeverityClass(severity);
+      const label = getSeverityLabel(severity);
       const ts = n.timestamp?.toDate ? formatRelativeTime(n.timestamp.toDate()) : '';
       return `
         <div class="notif-item ${n.read ? '' : 'unread'} ${cls}" data-id="${n.id}" onclick="NotificationSystem.markRead('${n.id}')">
           <div class="notif-item-icon">${icon}</div>
           <div class="notif-item-body">
-            <div class="notif-item-msg">${n.message}</div>
+            <div class="notif-item-msg">${message}</div>
             <div class="notif-item-meta">
-              <span class="notif-severity-badge ${cls}">${n.severity || 'info'}</span>
+              <span class="notif-severity-badge ${cls}">${label}</span>
               <span class="notif-time">${ts}</span>
             </div>
           </div>
@@ -95,7 +99,6 @@ const NotificationSystem = (() => {
     bellBtn.addEventListener('click', e => {
       e.stopPropagation();
       const isOpen = dropdown.classList.contains('open');
-      // Close profile dropdown if open
       const profileDd = document.getElementById('profileDropdown');
       if (profileDd) profileDd.style.display = 'none';
       dropdown.classList.toggle('open', !isOpen);
@@ -115,7 +118,7 @@ const NotificationSystem = (() => {
   // ── Mark individual notification as read ──
   async function markRead(notifId) {
     const uid = getCurrentUid();
-    if (!uid) return;
+    if (!uid || !notifId) return;
     try {
       await db.collection('users').doc(uid)
         .collection('notifications').doc(notifId)
@@ -130,6 +133,7 @@ const NotificationSystem = (() => {
     const uid = getCurrentUid();
     if (!uid) return;
     const unread = notificationsCache.filter(n => !n.read);
+    if (unread.length === 0) return;
     const batch = db.batch();
     unread.forEach(n => {
       const ref = db.collection('users').doc(uid).collection('notifications').doc(n.id);
@@ -145,7 +149,8 @@ const NotificationSystem = (() => {
   // ── Create a notification in Firestore ──
   async function createNotification({ type, message, severity = 'info' }) {
     const uid = getCurrentUid();
-    if (!uid) return;
+    if (!uid || !type || !message) return;
+
     // Prevent duplicate same-type notifications within 24h
     const recent = notificationsCache.find(n => {
       if (n.type !== type) return false;
@@ -170,7 +175,7 @@ const NotificationSystem = (() => {
   // ── Auto-trigger engine (called after new fuel entry) ──
   async function runAlertEngine(vehicleId) {
     const uid = getCurrentUid();
-    if (!uid) return;
+    if (!uid || !vehicleId) return;
 
     const logs = AppState.allFuelLogs.filter(l => l.vehicleId === vehicleId);
     if (logs.length < 2) return;
@@ -185,6 +190,8 @@ const NotificationSystem = (() => {
     const costs = [];
 
     for (let i = 1; i < sorted.length; i++) {
+      // Skip partial fills for mileage calc
+      if (sorted[i].isFullTank === false) continue;
       const dist = (sorted[i].odometer || 0) - (sorted[i - 1].odometer || 0);
       if (dist > 0) {
         mileages.push(dist / (sorted[i].liters || 1));
@@ -200,50 +207,59 @@ const NotificationSystem = (() => {
     const lastCost = costs[costs.length - 1];
 
     const vehicle = AppState.vehicles.find(v => v.id === vehicleId);
-    const vName = vehicle ? vehicle.name : 'your vehicle';
+    const vName = vehicle?.name || 'your vehicle';
 
-    // Low mileage notification
     if (lastMileage < avgMileage * 0.8) {
       await createNotification({
         type: `low_mileage_${vehicleId}`,
-        message: `⚠️ Low mileage detected on ${vName}! Latest: ${lastMileage.toFixed(1)} km/L vs avg ${avgMileage.toFixed(1)} km/L.`,
+        message: `⚠️ Low mileage on ${vName}! Latest: ${lastMileage.toFixed(1)} km/L vs avg ${avgMileage.toFixed(1)} km/L.`,
         severity: 'warning'
       });
     }
 
-    // High cost notification
     if (lastCost > avgCost * 1.2) {
       await createNotification({
         type: `high_cost_${vehicleId}`,
         message: `🚨 Fuel cost spiked on ${vName}! Last fill-up: ₹${lastCost.toFixed(0)} vs avg ₹${avgCost.toFixed(0)}.`,
-        severity: 'alert'
+        severity: 'critical'
       });
     }
   }
 
   // ── Check upcoming service reminders & notify ──
+  // FIX: was using reminder.type — correct field is reminder.serviceType
   async function checkReminderNotifications(reminders) {
     for (const reminder of reminders) {
+      if (!reminder || !reminder.vehicleId) continue;
+
       const vehicle = AppState.vehicles.find(v => v.id === reminder.vehicleId);
+      const vName = vehicle?.name || 'your vehicle';
+
+      // FIX: use serviceType (correct Firestore field), not reminder.type
+      const serviceLabel = reminder.serviceType || reminder.type || 'Service';
+
       const vLogs = AppState.allFuelLogs.filter(l => l.vehicleId === reminder.vehicleId);
       if (vLogs.length === 0) continue;
 
       const sorted = [...vLogs].sort((a, b) => (b.odometer || 0) - (a.odometer || 0));
       const currentOdo = sorted[0].odometer || 0;
-      const nextService = (reminder.lastKm || 0) + (reminder.intervalKm || 0);
+      const lastKm = Number(reminder.lastServiceKm) || 0;
+      const intervalKm = Number(reminder.intervalKm) || 0;
+      const nextService = lastKm + intervalKm;
       const remaining = nextService - currentOdo;
 
       if (remaining <= 500 && remaining >= 0) {
         await createNotification({
           type: `reminder_${reminder.id}`,
-          message: `🔔 ${reminder.type} due soon on ${vehicle?.name || 'your vehicle'}! ${remaining} km remaining.`,
+          message: `🔔 ${serviceLabel} due soon on ${vName}! ${remaining} km remaining.`,
           severity: 'info'
         });
       } else if (remaining < 0) {
         await createNotification({
           type: `reminder_overdue_${reminder.id}`,
-          message: `🚨 ${reminder.type} is OVERDUE on ${vehicle?.name || 'your vehicle'} by ${Math.abs(remaining)} km!`,
-          severity: 'alert'
+          // FIX: was "undefined is OVERDUE" — now uses correct serviceLabel
+          message: `🚨 ${serviceLabel} is OVERDUE on ${vName} by ${Math.abs(remaining).toLocaleString()} km!`,
+          severity: 'critical'
         });
       }
     }
@@ -251,16 +267,25 @@ const NotificationSystem = (() => {
 
   // ── Helpers ──
   function getSeverityIcon(severity) {
-    const map = { info: 'ℹ️', warning: '⚠️', alert: '🚨', success: '✅' };
+    const map = { info: 'ℹ️', warning: '⚠️', critical: '🚨', alert: '🚨', success: '✅' };
     return map[severity] || 'ℹ️';
   }
 
   function getSeverityClass(severity) {
-    const map = { info: 'notif-info', warning: 'notif-warning', alert: 'notif-alert', success: 'notif-success' };
-    return map[severity] || 'notif-info';
+    // Normalize 'alert' → 'critical' for consistent styling
+    const normalized = severity === 'alert' ? 'critical' : (severity || 'info');
+    const map = { info: 'notif-info', warning: 'notif-warning', critical: 'notif-critical', success: 'notif-success' };
+    return map[normalized] || 'notif-info';
+  }
+
+  // FIX: map severity keys to human-readable labels (was showing raw 'alert' string)
+  function getSeverityLabel(severity) {
+    const map = { info: 'Info', warning: 'Warning', critical: 'Critical', alert: 'Critical', success: 'Success' };
+    return map[severity] || 'Info';
   }
 
   function formatRelativeTime(date) {
+    if (!date) return '';
     const diff = Date.now() - date.getTime();
     const mins = Math.floor(diff / 60000);
     const hrs = Math.floor(diff / 3600000);
@@ -276,13 +301,7 @@ const NotificationSystem = (() => {
     if (!('Notification' in window)) return;
     if (Notification.permission === 'granted') return;
     if (Notification.permission === 'denied') return;
-
-    const permission = await Notification.requestPermission();
-    if (permission === 'granted') {
-      console.log('[FCM] Push notification permission granted.');
-      // FCM Token registration would be done here if messaging SDK is loaded
-      // e.g. const token = await messaging.getToken({ vapidKey: 'YOUR_VAPID_KEY' });
-    }
+    await Notification.requestPermission();
   }
 
   // ── Public API ──
@@ -296,8 +315,3 @@ const NotificationSystem = (() => {
     requestPushPermission
   };
 })();
-
-// Auto-init when auth is ready (after AppState is set)
-document.addEventListener('DOMContentLoaded', () => {
-  // Will be called from app.js after auth state resolves
-});

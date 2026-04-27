@@ -21,9 +21,10 @@ const AppState = {
   user: null,
   businessMode: false,
   vehicles: [],
-  allFuelLogs: [],     // all logs across all vehicles
+  allFuelLogs: [],            // all logs across all vehicles
+  allMaintenanceLogs: [],     // maintenance cost logs
   selectedVehicleId: 'all',
-  listeners: []        // Firestore listeners for cleanup
+  listeners: []               // Firestore listeners for cleanup
 };
 
 (function() {
@@ -68,6 +69,11 @@ const AppState = {
     initMobileMoreDrawer();
     loadVehicles();
 
+    // Load maintenance logs
+    if (typeof loadMaintenanceLogs === 'function') {
+      loadMaintenanceLogs();
+    }
+
     // Notifications system
     if (typeof NotificationSystem !== 'undefined') {
       NotificationSystem.init();
@@ -84,7 +90,8 @@ const AppState = {
       records: document.getElementById('pageRecords'),
       alerts: document.getElementById('pageAlerts'),
       reports: document.getElementById('pageReports'),
-      reminders: document.getElementById('pageReminders')
+      reminders: document.getElementById('pageReminders'),
+      map: document.getElementById('pageMap')
     };
 
     function navigate() {
@@ -134,6 +141,13 @@ const AppState = {
         if (typeof loadMonthlySummary === 'function') loadMonthlySummary();
       } else if (hash === 'reminders') {
         if (typeof loadReminders === 'function') loadReminders();
+      } else if (hash === 'map') {
+        if (typeof initMapPage === 'function') initMapPage();
+      }
+
+      // Cleanup map page when leaving
+      if (hash !== 'map' && typeof cleanupMapPage === 'function') {
+        cleanupMapPage();
       }
 
       // Close mobile sidebar
@@ -504,7 +518,8 @@ const AppState = {
       document.getElementById('globalVehicleSelect'),
       document.getElementById('fuelVehicleSelect'),
       document.getElementById('recordsVehicleFilter'),
-      document.getElementById('reminderVehicleSelect')
+      document.getElementById('reminderVehicleSelect'),
+      document.getElementById('maintVehicleSelect')
     ];
 
     selectors.forEach(sel => {

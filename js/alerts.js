@@ -47,6 +47,8 @@ window.loadAlerts = function() {
     const monthlyData = {};
 
     for (let i = 1; i < vLogs.length; i++) {
+      // Skip partial fills for mileage accuracy
+      if (vLogs[i].isFullTank === false) continue;
       const dist = (vLogs[i].odometer || 0) - (vLogs[i - 1].odometer || 0);
       if (dist > 0) {
         const m = dist / (vLogs[i].liters || 1);
@@ -58,7 +60,7 @@ window.loadAlerts = function() {
         costPerKms.push(cpk);
 
         const d = vLogs[i].date?.toDate ? vLogs[i].date.toDate() : new Date(vLogs[i].date);
-        const monthKey = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+        const monthKey = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '00');
         if (!monthlyData[monthKey]) monthlyData[monthKey] = { mileages: [], costPerKms: [] };
         monthlyData[monthKey].mileages.push(m);
         monthlyData[monthKey].costPerKms.push(cpk);
@@ -210,6 +212,12 @@ window.loadAlerts = function() {
   }
 
   emptyState.style.display = 'none';
+
+  // Limit to top 5 by default, show expand button if more
+  const maxVisible = 5;
+  const visible = alerts.slice(0, maxVisible);
+  const hidden = alerts.slice(maxVisible);
+
   container.innerHTML = `
     <div class="alerts-summary">
       <div class="alerts-count-row">
@@ -218,7 +226,7 @@ window.loadAlerts = function() {
         <span class="alerts-count-badge good">${alerts.filter(a => a.severity === 'good').length} Good</span>
       </div>
     </div>
-    ${alerts.map(a => `
+    ${visible.map(a => `
     <div class="alert-card slide-up severity-${a.severity}">
       <div class="alert-left">
         <span class="alert-sev-icon">${a.icon}</span>
@@ -231,5 +239,23 @@ window.loadAlerts = function() {
         <div class="alert-message">${a.message}</div>
         ${a.tip ? `<div class="alert-tip">💡 ${a.tip}</div>` : ''}
       </div>
-    </div>`).join('')}`;
-};
+    </div>`).join('')}
+    ${hidden.length > 0 ? `
+    <div id="hiddenAlerts" style="display:none;">
+      ${hidden.map(a => `
+      <div class="alert-card slide-up severity-${a.severity}">
+        <div class="alert-left"><span class="alert-sev-icon">${a.icon}</span></div>
+        <div class="alert-body">
+          <div class="alert-header-row">
+            <span class="alert-title">${a.title}</span>
+            <span class="severity-badge ${a.severity}">${a.label}</span>
+          </div>
+          <div class="alert-message">${a.message}</div>
+          ${a.tip ? `<div class="alert-tip">💡 ${a.tip}</div>` : ''}
+        </div>
+      </div>`).join('')}
+    </div>
+    <button class="btn btn-ghost" id="showAllAlertsBtn" onclick="document.getElementById('hiddenAlerts').style.display='';this.style.display='none';" style="width:100%;margin-top:var(--space-2);">
+      Show ${hidden.length} more alerts
+    </button>` : ''}`;
+}
