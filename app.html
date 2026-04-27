@@ -62,6 +62,9 @@
         <a href="#reminders" class="nav-link" data-page="reminders">
           <span class="nav-icon">🔔</span> Reminders
         </a>
+        <a href="#maintenance" class="nav-link" data-page="maintenance">
+          <span class="nav-icon">🔧</span> Maintenance
+        </a>
       </nav>
       <div class="sidebar-footer">
         <div style="padding: 0 var(--space-2) var(--space-4) var(--space-2); font-size: 0.75rem; color: rgba(255,255,255,0.5); text-align: center; border-bottom: 1px solid rgba(255,255,255,0.06); margin-bottom: var(--space-2); line-height: 1.5;">
@@ -194,7 +197,7 @@
                 <div class="card-icon amber">🛣️</div>
               </div>
             </div>
-            <div class="card stat-card slide-up">
+            <div class="card stat-card slide-up" onclick="window.location.hash='maintenance'" style="cursor:pointer;" title="View maintenance records">
               <div class="stat-header">
                 <div>
                   <div class="stat-label">Maintenance Cost</div>
@@ -236,7 +239,13 @@
 
           <!-- Smart Insights -->
           <div class="insights-section">
-            <h4 class="insights-heading">💡 Smart Insights</h4>
+            <div class="insights-section-header">
+              <div class="insights-title-row">
+                <span class="insights-glow-dot"></span>
+                <h4 class="insights-heading">Smart Insights</h4>
+              </div>
+              <span class="insights-subtitle">AI-powered analysis of your driving data</span>
+            </div>
             <div id="insightsContainer" class="insights-container"></div>
           </div>
 
@@ -491,6 +500,22 @@
           </div>
         </section>
 
+        <!-- ══════ MAINTENANCE SECTION ══════ -->
+        <section class="app-section" id="pageMaintenance">
+          <div class="section-header">
+            <h2><span class="icon">🔧</span> Maintenance Records</h2>
+            <button class="btn btn-primary" id="addMaintenanceBtn">+ Log Service</button>
+          </div>
+          <div id="maintenanceList">
+            <div class="empty-state" id="maintenanceEmpty">
+              <div class="empty-icon">🔧</div>
+              <h3>No service records yet</h3>
+              <p>Log your first service to track what was done and how much it cost</p>
+              <button class="btn btn-primary" id="addMaintenanceEmptyBtn">+ Log Service</button>
+            </div>
+          </div>
+        </section>
+
         <!-- ══════ MAP SECTION ══════ -->
         <section class="app-section" id="pageMap">
           <div class="map-container">
@@ -571,6 +596,9 @@
     <div class="more-drawer-content">
       <a href="#records" class="more-item" data-page="records">
         <span class="more-icon">📋</span> Records
+      </a>
+      <a href="#maintenance" class="more-item" data-page="maintenance">
+        <span class="more-icon">🔧</span> Maintenance
       </a>
       <a href="#alerts" class="more-item" data-page="alerts">
         <span class="more-icon">🚨</span> Alerts
@@ -730,7 +758,7 @@
   <div class="modal-overlay" id="maintenanceModal">
     <div class="modal">
       <div class="modal-header">
-        <h3 class="modal-title">🔧 Log Maintenance</h3>
+        <h3 class="modal-title" id="maintenanceModalTitle">🔧 Log Maintenance</h3>
         <button class="modal-close" id="maintenanceModalClose">✕</button>
       </div>
       <form id="maintenanceForm">
@@ -741,12 +769,16 @@
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Service Type</label>
-          <input type="text" class="form-input" id="maintServiceType" placeholder="e.g. Oil Change, Tire Rotation" required>
+          <label class="form-label">Service Type <span style="font-size:var(--text-xs);color:var(--text-tertiary);">(e.g. Full Service, Oil Change)</span></label>
+          <input type="text" class="form-input" id="maintServiceType" placeholder="e.g. Full Service, Brake Service" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Items Serviced <span style="font-size:var(--text-xs);color:var(--text-tertiary);">(one per line, optional)</span></label>
+          <textarea class="form-input" id="maintItems" placeholder="Engine Oil&#10;Oil Filter&#10;Air Filter&#10;Brake Pads" rows="4" style="resize:vertical;"></textarea>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">Cost (₹)</label>
+            <label class="form-label">Total Cost (₹)</label>
             <input type="number" class="form-input" id="maintCost" placeholder="e.g. 1500" step="0.01" min="0" required>
           </div>
           <div class="form-group">
@@ -756,7 +788,7 @@
         </div>
         <div class="form-group">
           <label class="form-label">Notes <span style="color:var(--text-tertiary)">(optional)</span></label>
-          <input type="text" class="form-input" id="maintNotes" placeholder="e.g. Replaced engine oil at 45000 km">
+          <input type="text" class="form-input" id="maintNotes" placeholder="e.g. Done at Sri Motors, 45000 km">
         </div>
         <div class="modal-actions">
           <button type="button" class="btn btn-ghost" id="maintenanceCancelBtn">Cancel</button>

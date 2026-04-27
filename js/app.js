@@ -91,6 +91,7 @@ const AppState = {
       alerts: document.getElementById('pageAlerts'),
       reports: document.getElementById('pageReports'),
       reminders: document.getElementById('pageReminders'),
+      maintenance: document.getElementById('pageMaintenance'),
       map: document.getElementById('pageMap')
     };
 
@@ -141,6 +142,8 @@ const AppState = {
         if (typeof loadMonthlySummary === 'function') loadMonthlySummary();
       } else if (hash === 'reminders') {
         if (typeof loadReminders === 'function') loadReminders();
+      } else if (hash === 'maintenance') {
+        if (typeof renderMaintenanceRecords === 'function') renderMaintenanceRecords();
       } else if (hash === 'map') {
         if (typeof initMapPage === 'function') initMapPage();
       }
