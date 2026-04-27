@@ -158,8 +158,8 @@
         <td data-label="Total"><strong>${formatCurrency(l.totalCost)}</strong></td>
         <td data-label="Odometer">${(l.odometer || 0).toLocaleString()} km</td>
         <td data-label="Distance">${l.distance ? l.distance.toLocaleString() + ' km' : '—'}</td>
-        <td data-label="Mileage">${l.mileage ? formatNumber(l.mileage) + ' km/L' : '—'}</td>
-        <td data-label="Cost/km">${l.costPerKm ? '₹' + formatNumber(l.costPerKm) : '—'}</td>
+        <td data-label="Mileage" title="${l.isFullTank === false ? 'Partial fill' : ''}">${l.mileage ? formatNumber(l.mileage) + ' km/L' : (l.isFullTank === false ? '<span style="color:var(--text-tertiary);font-size:0.75rem;">*partial</span>' : '—')}</td>
+        <td data-label="Cost/km">${l.costPerKm ? '₹' + formatNumber(l.costPerKm) : (l.isFullTank === false ? '<span style="color:var(--text-tertiary);font-size:0.75rem;">*partial</span>' : '—')}</td>
         <td class="table-actions">
           <button class="btn btn-ghost btn-icon btn-sm" onclick="editFuelLog('${l.id}','${l.vehicleId}')" title="Edit">✏️</button>
           <button class="btn btn-ghost btn-icon btn-sm" onclick="deleteFuelLog('${l.id}','${l.vehicleId}')" title="Delete">🗑️</button>
