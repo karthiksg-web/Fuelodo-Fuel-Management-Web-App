@@ -1,102 +1,114 @@
 // ============================================
-// FuelOdo - Speedometer & Odometer
+// FuelOdo - Speedometer / Gauge Widget v2
+// Features: Dynamic zones (<30, 30-40, >40), efficiency labels
 // ============================================
 
-(function() {
-  // Arc parameters for the SVG speedometer
-  const ARC_LENGTH = 345; // approximate arc length from SVG path
-  const MAX_MILEAGE = 30; // max km/L for full-scale
+window.updateSpeedometer = function(mileageValue) {
+  const arc = document.getElementById('speedoArc');
+  const needle = document.getElementById('speedoNeedle');
+  const valueText = document.getElementById('speedoValue');
+  const ticksGroup = document.getElementById('speedoTicks');
+  const labelText = document.getElementById('speedoLabelText');
 
-  // ── Update Speedometer Gauge ──
-  window.updateSpeedometer = function(mileage) {
-    const arc = document.getElementById('speedoArc');
-    const needle = document.getElementById('speedoNeedle');
-    const valueText = document.getElementById('speedoValue');
-    const ticksGroup = document.getElementById('speedoTicks');
+  if (!arc || !needle || !valueText) return;
 
-    if (!arc || !needle) return;
+  const MAX_VAL = 80;
+  const clamped = Math.min(Math.max(mileageValue, 0), MAX_VAL);
+  
+  // Calculate angle (0 to 180 degrees mapping to -90 to 90 for SVG rotation)
+  // Max 80 means each unit is 180/80 = 2.25 degrees
+  const angle = (clamped / MAX_VAL) * 180;
+  const needleRotation = angle - 90;
 
-    const clamped = Math.min(Math.max(mileage, 0), MAX_MILEAGE);
-    const ratio = clamped / MAX_MILEAGE;
+  // Animate needle
+  needle.style.transformOrigin = '140px 150px';
+  needle.style.transition = 'transform 1s cubic-bezier(0.4, 0, 0.2, 1)';
+  needle.style.transform = `rotate(${needleRotation}deg)`;
 
-    // Update arc fill
-    const offset = ARC_LENGTH * (1 - ratio);
-    arc.setAttribute('stroke-dashoffset', offset);
+  // Update text
+  valueText.textContent = clamped.toFixed(1);
 
-    // Update needle rotation
-    // Arc goes from ~225° (left) to ~315° (right) -> 180° sweep
-    // Needle rotates from -90° to +90° relative to vertical center
-    const angle = -90 + (ratio * 180);
-    needle.setAttribute('transform', `rotate(${angle}, 140, 150)`);
-
-    // Update value text
-    valueText.textContent = mileage.toFixed(1);
-
-    // Draw tick marks
-    renderTicks(ticksGroup);
-  };
-
-  function renderTicks(group) {
-    if (!group || group.children.length > 0) return; // only render once
-    
-    const cx = 140, cy = 150, r = 120;
-    const startAngle = 225;
-    const endAngle = 315;
-    const steps = 6; // 0, 5, 10, 15, 20, 25, 30
-
-    for (let i = 0; i <= steps; i++) {
-      const value = (MAX_MILEAGE / steps) * i;
-      const angle = startAngle + ((endAngle - startAngle) / steps) * i;
-      const rad = (angle * Math.PI) / 180;
-
-      const x1 = cx + (r - 5) * Math.cos(rad);
-      const y1 = cy + (r - 5) * Math.sin(rad);
-      const x2 = cx + (r + 8) * Math.cos(rad);
-      const y2 = cy + (r + 8) * Math.sin(rad);
-
-      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      line.setAttribute('x1', x1);
-      line.setAttribute('y1', y1);
-      line.setAttribute('x2', x2);
-      line.setAttribute('y2', y2);
-      line.setAttribute('stroke', 'var(--text-tertiary)');
-      line.setAttribute('stroke-width', '1.5');
-      group.appendChild(line);
-
-      // Label
-      const textX = cx + (r + 20) * Math.cos(rad);
-      const textY = cy + (r + 20) * Math.sin(rad);
-      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      text.setAttribute('x', textX);
-      text.setAttribute('y', textY + 3);
-      text.setAttribute('class', 'speedo-tick-text');
-      text.textContent = Math.round(value);
-      group.appendChild(text);
+  // Update efficiency label color and text
+  if (labelText) {
+    if (clamped === 0) {
+      labelText.textContent = "No Data";
+      labelText.style.fill = 'var(--text-tertiary)';
+    } else if (clamped < 30) {
+      labelText.textContent = "Efficiency: Low";
+      labelText.style.fill = 'var(--danger-500)';
+    } else if (clamped <= 40) {
+      labelText.textContent = "Efficiency: Medium";
+      labelText.style.fill = 'var(--warning-500)';
+    } else if (clamped <= 60) {
+      labelText.textContent = "Efficiency: High";
+      labelText.style.fill = 'var(--success-500)';
+    } else {
+      labelText.textContent = "Efficiency: Excellent";
+      labelText.style.fill = 'var(--success-500)';
     }
   }
 
-  // ── Update Digital Odometer ──
-  window.updateOdometer = function(value) {
-    const display = document.getElementById('odometerDisplay');
-    if (!display) return;
+  // Draw ticks
+  if (ticksGroup && ticksGroup.children.length === 0) {
+    for (let i = 0; i <= MAX_VAL; i += 10) {
+      const a = (i / MAX_VAL) * Math.PI; // 0 to PI
+      // Center is 140, 150
+      // Radius outer = 110, inner = 100
+      const x1 = 140 - 110 * Math.cos(a);
+      const y1 = 150 - 110 * Math.sin(a);
+      const x2 = 140 - 100 * Math.cos(a);
+      const y2 = 150 - 100 * Math.sin(a);
 
-    const padded = String(Math.round(value)).padStart(6, '0');
-    const digits = display.querySelectorAll('.odo-digit');
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute("x1", x1);
+      line.setAttribute("y1", y1);
+      line.setAttribute("x2", x2);
+      line.setAttribute("y2", y2);
+      line.setAttribute("stroke", "var(--border-color)");
+      line.setAttribute("stroke-width", "2");
 
-    digits.forEach((digit, i) => {
-      const newVal = padded[i] || '0';
-      if (digit.textContent !== newVal) {
-        digit.style.transition = 'none';
-        digit.style.transform = 'translateY(-100%)';
-        digit.style.opacity = '0';
-        
-        setTimeout(() => {
-          digit.textContent = newVal;
-          digit.style.transition = 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
-          digit.style.transform = 'translateY(0)';
-          digit.style.opacity = '1';
-        }, 50 + i * 80);
+      if (i % 20 === 0) {
+        line.setAttribute("stroke-width", "3");
+        // Add text
+        const tx = 140 - 85 * Math.cos(a);
+        const ty = 150 - 85 * Math.sin(a);
+        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        text.setAttribute("x", tx);
+        text.setAttribute("y", ty + 4);
+        text.setAttribute("class", "speedo-tick-text");
+        text.setAttribute("text-anchor", "middle");
+        text.textContent = i;
+        ticksGroup.appendChild(text);
       }
-    });
-  };
-})();
+      
+      ticksGroup.appendChild(line);
+    }
+  }
+};
+
+window.updateOdometer = function(odometerValue) {
+  const display = document.getElementById('odometerDisplay');
+  if (!display) return;
+
+  const valStr = Math.floor(odometerValue || 0).toString().padStart(6, '0');
+  const digits = display.querySelectorAll('.odo-digit');
+  
+  for (let i = 0; i < 6; i++) {
+    const digitEl = digits[i];
+    if (digitEl) {
+      // Small animation effect
+      if (digitEl.textContent !== valStr[i]) {
+        digitEl.style.transform = 'translateY(-10px)';
+        digitEl.style.opacity = '0';
+        setTimeout(() => {
+          digitEl.textContent = valStr[i];
+          digitEl.style.transform = 'translateY(10px)';
+          setTimeout(() => {
+            digitEl.style.transform = 'translateY(0)';
+            digitEl.style.opacity = '1';
+          }, 50);
+        }, 150);
+      }
+    }
+  }
+};

@@ -150,16 +150,16 @@
       const badgeClass = fuelBadge === 'Diesel' ? 'badge-diesel' : 'badge-petrol';
 
       return `<tr>
-        <td>${formatDate(l.date)}</td>
-        <td>${l.vehicleName || '—'}</td>
-        <td><span class="badge ${badgeClass}">${fuelBadge}</span></td>
-        <td>${formatNumber(l.liters)} L</td>
-        <td>${formatCurrency(l.pricePerLiter)}</td>
-        <td><strong>${formatCurrency(l.totalCost)}</strong></td>
-        <td>${(l.odometer || 0).toLocaleString()} km</td>
-        <td>${l.distance ? l.distance.toLocaleString() + ' km' : '—'}</td>
-        <td>${l.mileage ? formatNumber(l.mileage) + ' km/L' : '—'}</td>
-        <td>${l.costPerKm ? '₹' + formatNumber(l.costPerKm) : '—'}</td>
+        <td data-label="Date">${formatDate(l.date)}</td>
+        <td data-label="Vehicle">${l.vehicleName || '—'}</td>
+        <td data-label="Fuel"><span class="badge ${badgeClass}">${fuelBadge}</span></td>
+        <td data-label="Liters">${formatNumber(l.liters)} L</td>
+        <td data-label="Price/L">${formatCurrency(l.pricePerLiter)}</td>
+        <td data-label="Total"><strong>${formatCurrency(l.totalCost)}</strong></td>
+        <td data-label="Odometer">${(l.odometer || 0).toLocaleString()} km</td>
+        <td data-label="Distance">${l.distance ? l.distance.toLocaleString() + ' km' : '—'}</td>
+        <td data-label="Mileage">${l.mileage ? formatNumber(l.mileage) + ' km/L' : '—'}</td>
+        <td data-label="Cost/km">${l.costPerKm ? '₹' + formatNumber(l.costPerKm) : '—'}</td>
         <td class="table-actions">
           <button class="btn btn-ghost btn-icon btn-sm" onclick="editFuelLog('${l.id}','${l.vehicleId}')" title="Edit">✏️</button>
           <button class="btn btn-ghost btn-icon btn-sm" onclick="deleteFuelLog('${l.id}','${l.vehicleId}')" title="Delete">🗑️</button>

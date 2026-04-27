@@ -155,6 +155,13 @@
       });
 
       container.innerHTML = html;
+
+      // Trigger notification check for due reminders
+      if (typeof NotificationSystem !== 'undefined') {
+        const payload = [];
+        snap.forEach(doc => payload.push({ id: doc.id, ...doc.data() }));
+        NotificationSystem.checkReminderNotifications(payload);
+      }
     } catch (err) {
       console.error('Load reminders error:', err);
     }

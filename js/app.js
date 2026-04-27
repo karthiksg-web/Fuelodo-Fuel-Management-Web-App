@@ -19,6 +19,7 @@ function showToast(msg, type = 'info') {
 // Global state
 const AppState = {
   user: null,
+  businessMode: false,
   vehicles: [],
   allFuelLogs: [],     // all logs across all vehicles
   selectedVehicleId: 'all',
@@ -46,6 +47,11 @@ const AppState = {
 
       document.getElementById('headerUserName').textContent = name;
       updateUserAvatarUI(name, user.photoURL);
+
+      // Load business mode
+      AppState.businessMode = userData.businessMode === true;
+      document.body.classList.toggle('business-mode-active', AppState.businessMode);
+
     } catch (e) {
       console.error('Failed to load user profile:', e);
     }
@@ -59,7 +65,14 @@ const AppState = {
     initSidebar();
     initProfile();
     initEditProfile();
+    initMobileMoreDrawer();
     loadVehicles();
+
+    // Notifications system
+    if (typeof NotificationSystem !== 'undefined') {
+      NotificationSystem.init();
+      NotificationSystem.requestPushPermission();
+    }
   });
 
   // ── SPA Router ──
@@ -77,8 +90,21 @@ const AppState = {
     function navigate() {
       const hash = window.location.hash.replace('#', '') || 'dashboard';
       
+      const moreDrawer = document.getElementById('moreDrawer');
+      if (hash === 'more') {
+        if (moreDrawer) moreDrawer.classList.add('open');
+        document.querySelectorAll('.nav-link[data-page], .mobile-nav-btn[data-page]').forEach(link => {
+          link.classList.toggle('active', link.dataset.page === 'more');
+        });
+        return; // Keep current page content
+      } else {
+        if (moreDrawer) moreDrawer.classList.remove('open');
+      }
+
       // Hide all
-      Object.values(pages).forEach(p => p.classList.remove('active'));
+      Object.values(pages).forEach(p => {
+        if (p) p.classList.remove('active');
+      });
       
       // Show target
       const target = pages[hash];
@@ -117,6 +143,35 @@ const AppState = {
 
     window.addEventListener('hashchange', navigate);
     navigate();
+  }
+
+  // ── Mobile More Drawer ──
+  function initMobileMoreDrawer() {
+    const moreDrawer = document.getElementById('moreDrawer');
+    const closeBtn = document.getElementById('closeMoreDrawer');
+    const logoutBtn = document.getElementById('mobileLogoutBtn');
+
+    if (!moreDrawer) return;
+
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        // Go back to previous hash or dashboard
+        if (window.history.length > 1) {
+          window.history.back();
+        } else {
+          window.location.hash = 'dashboard';
+        }
+      });
+    }
+
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        AppState.listeners.forEach(unsub => unsub());
+        if (typeof auth !== 'undefined') await auth.signOut();
+        window.location.href = 'index.html';
+      });
+    }
   }
 
   // ── Sidebar & Menu ──
@@ -171,6 +226,10 @@ const AppState = {
         // Populate dynamic stats
         document.getElementById('dropdownVehiclesCount').textContent = AppState.vehicles.length;
         document.getElementById('dropdownFillupsCount').textContent = AppState.allFuelLogs.length;
+
+        // Toggle business mode check
+        const bizToggle = document.getElementById('businessModeToggle');
+        if (bizToggle) bizToggle.checked = AppState.businessMode === true;
       }
     });
 
@@ -180,6 +239,25 @@ const AppState = {
         dropdown.style.display = 'none';
       }
     });
+
+    // Business mode toggle
+    const bizToggle = document.getElementById('businessModeToggle');
+    if (bizToggle) {
+      bizToggle.addEventListener('change', async (e) => {
+        const isBiz = e.target.checked;
+        AppState.businessMode = isBiz;
+        try {
+          await db.collection('users').doc(AppState.user.uid).set({ businessMode: isBiz }, { merge: true });
+          document.body.classList.toggle('business-mode-active', isBiz);
+          const hash = window.location.hash.replace('#', '') || 'dashboard';
+          if (hash === 'dashboard' && typeof initDashboard === 'function') initDashboard();
+          showToast(`Business Mode ${isBiz ? 'Enabled' : 'Disabled'}`, 'success');
+        } catch (err) {
+          console.error(err);
+          e.target.checked = !isBiz; // revert
+        }
+      });
+    }
 
     // Logout (Dropdown)
     logoutBtn.addEventListener('click', async () => {

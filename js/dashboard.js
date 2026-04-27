@@ -1,11 +1,13 @@
 // ============================================
-// FuelOdo - Dashboard (Stats + Charts)
+// FuelOdo - Dashboard System
+// Features: Business Mode Income/Profit tracking, Skeleton Loaders
 // ============================================
 
 let expenseChart = null;
 let mileageChart = null;
 
 window.initDashboard = function() {
+  const isBusinessMode = AppState.businessMode === true;
   const logs = getFilteredLogs();
 
   // ── Stat Cards ──
@@ -13,6 +15,7 @@ window.initDashboard = function() {
   let totalDistance = 0;
   let totalMileage = 0;
   let mileageCount = 0;
+  let totalIncome = 0; // For business mode
 
   let latestOdo = 0;
   let latestMileage = 0;
@@ -23,21 +26,22 @@ window.initDashboard = function() {
   logs.forEach(l => {
     if (!byVehicle[l.vehicleId]) byVehicle[l.vehicleId] = [];
     byVehicle[l.vehicleId].push(l);
+    if (isBusinessMode) {
+      totalIncome += (parseFloat(l.income) || 0);
+    }
   });
 
   Object.values(byVehicle).forEach(vLogs => {
-    if (window.sortLogsAsc) {
-      window.sortLogsAsc(vLogs);
-    } else {
-      vLogs.sort((a, b) => {
-        const da = a.date?.toDate ? a.date.toDate().getTime() : new Date(a.date).getTime();
-        const db2 = b.date?.toDate ? b.date.toDate().getTime() : new Date(b.date).getTime();
-        return da - db2;
-      });
-    }
+    // Sort ascending by date
+    vLogs.sort((a, b) => {
+      const da = a.date?.toDate ? a.date.toDate().getTime() : new Date(a.date).getTime();
+      const db2 = b.date?.toDate ? b.date.toDate().getTime() : new Date(b.date).getTime();
+      if (da !== db2) return da - db2;
+      return (a.odometer || 0) - (b.odometer || 0);
+    });
 
     if (vLogs.length > 0) {
-      const last = vLogs[vLogs.length - 1]; // Guaranteed newest due to sortLogsAsc
+      const last = vLogs[vLogs.length - 1]; // Guaranteed newest due to sort
       if ((last.odometer || 0) > latestOdo) latestOdo = last.odometer;
     }
 
@@ -70,32 +74,38 @@ window.initDashboard = function() {
 
   const avgMileage = mileageCount > 0 ? totalMileage / mileageCount : 0;
 
+  // Render Stats
   document.getElementById('statTotalCost').textContent = formatCurrency(totalCost);
   document.getElementById('statTotalDistance').textContent = totalDistance.toLocaleString() + ' km';
   document.getElementById('statAvgMileage').textContent = formatNumber(avgMileage) + ' km/L';
-  document.getElementById('statTotalFillups').textContent = logs.length;
-
-  // ── Speedometer (Latest Mileage) ──
-  if (typeof updateSpeedometer === 'function') {
-    updateSpeedometer(latestMileage);
+  
+  // Total Expenses (For MVP, assuming equal to total cost unless other expenses exist)
+  const statTotalExpensesEl = document.getElementById('statTotalExpenses');
+  if (statTotalExpensesEl) {
+    statTotalExpensesEl.textContent = formatCurrency(totalCost);
   }
 
-  // ── Digital Odometer (Latest Odometer) ──
-  if (typeof updateOdometer === 'function') {
-    updateOdometer(latestOdo);
+  // Toggle Fill-ups vs Profit based on Business Mode
+  const statProfitCard = document.getElementById('statProfitCard');
+  if (isBusinessMode && statProfitCard) {
+    statProfitCard.style.display = 'flex';
+    const profit = totalIncome - totalCost;
+    const profitEl = document.getElementById('statTotalProfit');
+    if (profitEl) {
+      profitEl.textContent = formatCurrency(profit);
+      profitEl.style.color = profit >= 0 ? 'var(--success-500)' : 'var(--danger-500)';
+    }
+  } else {
+    if (statProfitCard) statProfitCard.style.display = 'none';
   }
 
-  // ── Charts ──
-  renderExpenseChart(logs);
-  renderMileageChart(logs, byVehicle);
-
-  // ── Save Dashboard Snapshot (For Demo / Caching) ──
-  saveDashboardSnapshot({
-    totalCost,
-    totalDistance,
-    avgMileage: formatNumber(avgMileage),
-    totalFillups: logs.length
-  });
+  // ── Lazy load charts ──
+  // Use timeout or IntersectionObserver in a more complex setup
+  // Here we use a slight delay for smooth UI rendering (avoids blocking main thread)
+  setTimeout(() => {
+    renderExpenseChart(logs);
+    renderMileageChart(logs, byVehicle);
+  }, 100);
 };
 
 function renderExpenseChart(logs) {
@@ -181,7 +191,6 @@ function renderMileageChart(logs, byVehicle) {
   const ctx = document.getElementById('mileageChart');
   if (!ctx) return;
 
-  // Calculate mileage per fill-up with dates
   const points = [];
   Object.values(byVehicle).forEach(vLogs => {
     for (let i = 1; i < vLogs.length; i++) {
@@ -257,21 +266,4 @@ function renderMileageChart(logs, byVehicle) {
       }
     }
   });
-}
-
-// ── Save Dashboard Snapshot ──
-async function saveDashboardSnapshot(stats) {
-  const user = firebase.auth().currentUser;
-  // Ensure we are logged in and db exists
-  if (!user || typeof db === 'undefined') return;
-
-  try {
-    const docRef = db.collection('users').doc(user.uid).collection('dashboardRecords').doc('latest_summary');
-    await docRef.set({
-      ...stats,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
-  } catch (err) {
-    console.warn('Failed to sync dashboard snapshot:', err);
-  }
 }

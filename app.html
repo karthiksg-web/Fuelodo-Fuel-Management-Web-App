@@ -56,6 +56,11 @@
         </a>
       </nav>
       <div class="sidebar-footer">
+        <div style="padding: 0 var(--space-2) var(--space-4) var(--space-2); font-size: 0.75rem; color: rgba(255,255,255,0.5); text-align: center; border-bottom: 1px solid rgba(255,255,255,0.06); margin-bottom: var(--space-2); line-height: 1.5;">
+          <strong>Contact Support:</strong><br>
+          <a href="mailto:projects.karthiksulakhe@gmail.com" style="color: var(--primary-400); text-decoration: none;">projects.karthiksulakhe@gmail.com</a><br>
+          <a href="tel:+919448560958" style="color: var(--primary-400); text-decoration: none;">+91 9448560958</a>
+        </div>
         <a href="#" class="nav-link" id="logoutBtn">
           <span class="nav-icon">🚪</span> Logout
         </a>
@@ -69,15 +74,35 @@
     <header class="top-header" id="topHeader">
       <div class="header-left">
         <button class="menu-toggle btn-icon" id="menuToggle" aria-label="Toggle menu">☰</button>
-        <div class="header-greeting">
+        <div class="header-greeting desktop-only">
           Hello, <strong id="headerUserName">User</strong> 👋
         </div>
       </div>
+      
+      <div class="header-center mobile-only">
+        <div class="header-brand">Fuel<span>Odo</span></div>
+      </div>
+
       <div class="header-right">
-        <select class="form-input" id="globalVehicleSelect" style="width:auto;min-width:150px;padding:6px 32px 6px 12px;font-size:0.8125rem;">
+        <select class="form-input desktop-only" id="globalVehicleSelect" style="width:auto;min-width:150px;padding:6px 32px 6px 12px;font-size:0.8125rem;">
           <option value="all">All Vehicles</option>
         </select>
         <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">🌙</button>
+        <!-- Notifications Bell -->
+        <div style="position:relative;" id="notifContainer">
+          <button class="btn-icon" id="bellBtn" aria-label="Notifications" style="font-size:1.2rem;position:relative;">
+            🔔
+            <span class="notif-badge" id="notifBadge" style="display:none;">0</span>
+          </button>
+          <!-- Notification Dropdown -->
+          <div class="card notif-dropdown slide-up" id="notifDropdown">
+            <div class="notif-header">
+              <span style="font-weight:600;">Notifications</span>
+              <button class="notif-mark-all" id="notifMarkAllRead">Mark all read</button>
+            </div>
+            <div class="notif-list" id="notificationList"></div>
+          </div>
+        </div>
         <div style="position:relative;" id="avatarContainer">
           <div class="user-avatar" id="userAvatar" title="Profile" style="cursor:pointer;">U</div>
           
@@ -97,6 +122,14 @@
             <div style="display:flex; justify-content:space-between; margin-bottom:var(--space-4); font-size:var(--text-sm);">
               <span style="color:var(--text-secondary);">Total Fill-ups</span>
               <strong id="dropdownFillupsCount">0</strong>
+            </div>
+            <!-- Business Mode Toggle -->
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:var(--space-2) 0; margin-bottom:var(--space-2); border-bottom:1px solid var(--border-color);">
+              <span style="font-size:var(--text-sm); font-weight:500;">Business Mode</span>
+              <label class="switch">
+                <input type="checkbox" id="businessModeToggle">
+                <span class="slider round"></span>
+              </label>
             </div>
             <button class="btn btn-ghost" id="editProfileBtn" style="width:100%; justify-content:flex-start; padding:var(--space-2); margin-bottom:var(--space-2); gap:var(--space-2);">
               <span style="font-size:1.2rem;">✏️</span> Edit Profile
@@ -122,46 +155,7 @@
             <h2><span class="icon">📊</span> Dashboard</h2>
           </div>
 
-          <!-- Speedometer -->
-          <div class="card speedometer-container slide-up" id="speedometerSection">
-            <div class="speedometer-widget" id="speedometerWidget">
-              <svg class="speedometer-svg" viewBox="0 0 280 180">
-                <defs>
-                  <linearGradient id="speedoGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stop-color="#10b981"/>
-                    <stop offset="50%" stop-color="#fbbf24"/>
-                    <stop offset="100%" stop-color="#f43f5e"/>
-                  </linearGradient>
-                </defs>
-                <!-- background arc -->
-                <path class="speedo-bg-arc" d="M 30 150 A 110 110 0 0 1 250 150"/>
-                <!-- fill arc -->
-                <path class="speedo-fill-arc" id="speedoArc" d="M 30 150 A 110 110 0 0 1 250 150"
-                      stroke-dasharray="345" stroke-dashoffset="345"/>
-                <!-- tick marks rendered by JS -->
-                <g id="speedoTicks"></g>
-                <!-- needle -->
-                <g class="speedo-needle" id="speedoNeedle">
-                  <line x1="140" y1="150" x2="140" y2="50"/>
-                </g>
-                <circle class="speedo-center" cx="140" cy="150" r="8"/>
-                <!-- value -->
-                <text class="speedo-value" id="speedoValue" x="140" y="130">0.0</text>
-                <text class="speedo-unit" x="140" y="148">km/L</text>
-                <text class="speedo-label-text" x="140" y="174">Latest Mileage</text>
-              </svg>
-            </div>
-            <!-- Digital Odometer -->
-            <div class="odometer-display" id="odometerDisplay">
-              <div class="odo-digit">0</div>
-              <div class="odo-digit">0</div>
-              <div class="odo-digit">0</div>
-              <div class="odo-digit">0</div>
-              <div class="odo-digit">0</div>
-              <div class="odo-digit">0</div>
-            </div>
-            <div class="odo-label">Latest Odometer (km)</div>
-          </div>
+
 
           <!-- Stat Cards -->
           <div class="stats-grid" id="statsGrid">
@@ -171,34 +165,34 @@
                   <div class="stat-label">Total Fuel Cost</div>
                   <div class="stat-value" id="statTotalCost">₹0</div>
                 </div>
-                <div class="card-icon blue">💰</div>
+                <div class="card-icon blue">⛽</div>
               </div>
             </div>
             <div class="card stat-card green slide-up">
               <div class="stat-header">
                 <div>
-                  <div class="stat-label">Total Distance</div>
-                  <div class="stat-value" id="statTotalDistance">0 km</div>
+                  <div class="stat-label">Avg. Mileage</div>
+                  <div class="stat-value" id="statAvgMileage">0 km/L</div>
                 </div>
-                <div class="card-icon green">🛣️</div>
+                <div class="card-icon green">⚡</div>
               </div>
             </div>
             <div class="card stat-card amber slide-up">
               <div class="stat-header">
                 <div>
-                  <div class="stat-label">Average Mileage</div>
-                  <div class="stat-value" id="statAvgMileage">0 km/L</div>
+                  <div class="stat-label">Total Distance</div>
+                  <div class="stat-value" id="statTotalDistance">0 km</div>
                 </div>
-                <div class="card-icon amber">⚡</div>
+                <div class="card-icon amber">🛣️</div>
               </div>
             </div>
             <div class="card stat-card slide-up">
               <div class="stat-header">
                 <div>
-                  <div class="stat-label">Total Fill-ups</div>
-                  <div class="stat-value" id="statTotalFillups">0</div>
+                  <div class="stat-label">Total Expenses</div>
+                  <div class="stat-value" id="statTotalExpenses">₹0</div>
                 </div>
-                <div class="card-icon rose">⛽</div>
+                <div class="card-icon blue">💳</div>
               </div>
             </div>
           </div>
@@ -285,10 +279,30 @@
                   <input type="date" class="form-input" id="fuelDate" required>
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Odometer Reading (km)</label>
+                  <label class="form-label">Odometer Reading (km) <span id="odomWarning" style="display:none;font-size:0.75rem;margin-left:8px;"></span></label>
                   <input type="number" class="form-input" id="fuelOdometer" placeholder="e.g. 45230" min="0" required>
                 </div>
               </div>
+              
+              <!-- Business Fields -->
+              <div class="business-fields-container" id="businessFields">
+                <div style="font-weight:600;margin-bottom:var(--space-2);font-size:0.875rem;">💼 Business Trip Details</div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Driver Name <span style="font-size:0.75rem;color:var(--text-tertiary);font-weight:400;">(optional)</span></label>
+                    <input type="text" class="form-input" id="fuelDriverName" placeholder="e.g. John Doe">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Trip Purpose <span style="font-size:0.75rem;color:var(--text-tertiary);font-weight:400;">(optional)</span></label>
+                    <input type="text" class="form-input" id="fuelTripPurpose" placeholder="e.g. Delivery">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Income Generated (₹) <span style="font-size:0.75rem;color:var(--text-tertiary);font-weight:400;">(optional)</span></label>
+                  <input type="number" class="form-input" id="fuelIncome" placeholder="e.g. 1500" min="0" step="0.01">
+                </div>
+              </div>
+
               <div class="form-row">
                 <div class="form-group">
                   <label class="form-label">Liters Filled</label>
@@ -441,22 +455,54 @@
     <nav class="mobile-nav">
       <div class="mobile-nav-inner">
         <a href="#dashboard" class="mobile-nav-btn active" data-page="dashboard">
-          <span class="mobile-nav-icon">📊</span> Home
+          <span class="mobile-nav-icon">📊</span>
+          <span class="mobile-nav-text">Dashboard</span>
         </a>
         <a href="#vehicles" class="mobile-nav-btn" data-page="vehicles">
-          <span class="mobile-nav-icon">🚗</span> Cars
+          <span class="mobile-nav-icon">🚗</span>
+          <span class="mobile-nav-text">Vehicles</span>
         </a>
-        <a href="#fuel" class="mobile-nav-btn" data-page="fuel">
-          <span class="mobile-nav-icon">⛽</span> Fuel
-        </a>
+        
+        <div class="mobile-nav-fab-wrapper">
+          <a href="#fuel" class="mobile-nav-fab" data-page="fuel" title="Add Fuel">
+            <span class="mobile-nav-fab-icon">+</span>
+          </a>
+          <span class="mobile-nav-text" style="margin-top: 8px;">Add Fuel</span>
+        </div>
+
         <a href="#records" class="mobile-nav-btn" data-page="records">
-          <span class="mobile-nav-icon">📋</span> Logs
+          <span class="mobile-nav-icon">📋</span>
+          <span class="mobile-nav-text">Records</span>
         </a>
-        <a href="#alerts" class="mobile-nav-btn" data-page="alerts">
-          <span class="mobile-nav-icon">🚨</span> Alerts
+        <a href="#more" class="mobile-nav-btn" data-page="more">
+          <span class="mobile-nav-icon">⋮</span>
+          <span class="mobile-nav-text">More</span>
         </a>
       </div>
     </nav>
+  </div>
+
+  <!-- More Drawer (Mobile) -->
+  <div class="more-drawer" id="moreDrawer">
+    <div class="more-drawer-header">
+      <h3>More Options</h3>
+      <button class="btn-icon" id="closeMoreDrawer">✕</button>
+    </div>
+    <div class="more-drawer-content">
+      <a href="#alerts" class="more-item" data-page="alerts">
+        <span class="more-icon">🚨</span> Alerts
+      </a>
+      <a href="#reports" class="more-item" data-page="reports">
+        <span class="more-icon">📤</span> Reports
+      </a>
+      <a href="#reminders" class="more-item" data-page="reminders">
+        <span class="more-icon">🔔</span> Reminders
+      </a>
+      <div class="more-divider"></div>
+      <a href="#" class="more-item" id="mobileLogoutBtn">
+        <span class="more-icon">🚪</span> Logout
+      </a>
+    </div>
   </div>
 
   <!-- ═══════════════ MODALS ═══════════════ -->
@@ -612,6 +658,7 @@
 
   <!-- App Scripts -->
   <script src="js/firebase-config.js?v=3"></script>
+  <script src="js/notifications.js?v=3"></script>
   <script src="js/theme.js?v=3"></script>
   <script src="js/app.js?v=3"></script>
   <script src="js/vehicles.js?v=3"></script>
@@ -619,7 +666,6 @@
   <script src="js/dashboard.js?v=3"></script>
   <script src="js/records.js?v=3"></script>
   <script src="js/alerts.js?v=3"></script>
-  <script src="js/speedometer.js?v=3"></script>
   <script src="js/export.js?v=3"></script>
   <script src="js/reminders.js?v=3"></script>
 </body>
