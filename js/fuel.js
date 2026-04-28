@@ -1,6 +1,6 @@
 // ============================================
 // FuelOdo - Fuel Entry System v3
-// Added: Full Tank toggle (isFullTank field)
+// Removed: Full Tank toggle (always full tank)
 // Added: Inline field validation with error messages
 // Fixed: Mileage skipped for partial fills
 // ============================================
@@ -27,7 +27,6 @@
     const calcCostPerKm = document.getElementById('calcCostPerKm');
     const dateInput = document.getElementById('fuelDate');
     const odomWarning = document.getElementById('odomWarning');
-    const fullTankToggle = document.getElementById('fullTankToggle');
     const businessFields = document.getElementById('businessFields');
 
     if (!form) return;
@@ -129,7 +128,6 @@
       const liters = parseFloat(litersInput.value) || 0;
       const price = parseFloat(priceInput.value) || 0;
       const totalCost = liters * price;
-      const isPartialFill = fullTankToggle && !fullTankToggle.checked;
 
       if (odomWarning) odomWarning.style.display = 'none';
       odometerInput.classList.remove('input-error');
@@ -161,28 +159,12 @@
           odomWarning.className = 'odometer-warning caution';
         }
 
-        // Show auto-calc only for full tank
-        if (!isPartialFill) {
-          const mileage = liters > 0 ? distance / liters : 0;
-          const costPerKm = distance > 0 ? totalCost / distance : 0;
-          calcDistance.textContent = distance.toLocaleString();
-          calcMileage.textContent = formatNumber(mileage);
-          calcCostPerKm.textContent = formatNumber(costPerKm);
-          autoCalcDisplay.style.display = '';
-
-          // Update partial fill note visibility
-          const partialNote = document.getElementById('partialFillNote');
-          if (partialNote) partialNote.style.display = 'none';
-        } else {
-          // Partial fill: show distance only
-          calcDistance.textContent = distance.toLocaleString();
-          calcMileage.textContent = '—';
-          calcCostPerKm.textContent = '—';
-          autoCalcDisplay.style.display = '';
-
-          const partialNote = document.getElementById('partialFillNote');
-          if (partialNote) partialNote.style.display = '';
-        }
+        const mileage = liters > 0 ? distance / liters : 0;
+        const costPerKm = distance > 0 ? totalCost / distance : 0;
+        calcDistance.textContent = distance.toLocaleString();
+        calcMileage.textContent = formatNumber(mileage);
+        calcCostPerKm.textContent = formatNumber(costPerKm);
+        autoCalcDisplay.style.display = '';
       } else {
         autoCalcDisplay.style.display = 'none';
       }
@@ -192,7 +174,6 @@
     litersInput.addEventListener('input', () => { updateTotalCost(); updateAutoCalc(); });
     priceInput.addEventListener('input', () => { updateTotalCost(); updateAutoCalc(); });
     vehicleSelect.addEventListener('change', updateAutoCalc);
-    if (fullTankToggle) fullTankToggle.addEventListener('change', updateAutoCalc);
 
     // ── Save fuel entry ──
     form.addEventListener('submit', async e => {
@@ -216,7 +197,7 @@
 
       const date = dateInput.value;
       const totalCost = liters * pricePerLiter;
-      const isFullTank = fullTankToggle ? fullTankToggle.checked : true;
+      const isFullTank = true;
 
       // Odometer validation
       const prevOdometer = getPreviousOdometer(vehicleId);
@@ -243,7 +224,7 @@
           if (!proceed) return;
         }
 
-        // Only calculate mileage for full tank fills
+        // Always calculate mileage
         if (isFullTank) {
           mileage = distance / liters;
           costPerKm = totalCost / distance;
@@ -297,7 +278,6 @@
         showToast('✅ Fuel entry saved!', 'success');
         form.reset();
         dateInput.value = new Date().toISOString().split('T')[0];
-        if (fullTankToggle) fullTankToggle.checked = true; // Reset to full tank default
         totalCostDisplay.textContent = '₹0.00';
         autoCalcDisplay.style.display = 'none';
         if (odomWarning) odomWarning.style.display = 'none';
@@ -324,7 +304,6 @@
         if (odomWarning) odomWarning.style.display = 'none';
         odometerInput.classList.remove('input-error');
         dateInput.value = new Date().toISOString().split('T')[0];
-        if (fullTankToggle) fullTankToggle.checked = true;
         form.querySelectorAll('.field-error').forEach(e => e.remove());
         form.querySelectorAll('.input-error').forEach(e => e.classList.remove('input-error'));
         updateBusinessFields();

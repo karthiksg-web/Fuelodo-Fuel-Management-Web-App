@@ -1003,49 +1003,8 @@ input:checked+.slider:before {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Field note (partial fill info) ── */
-.field-note {
-  font-size: var(--text-xs);
-  color: var(--warning-600);
-  background: rgba(245, 158, 11, 0.08);
-  border: 1px solid rgba(245, 158, 11, 0.2);
-  border-radius: var(--radius-sm);
-  padding: var(--space-2) var(--space-3);
-  margin-top: calc(-1 * var(--space-3));
-  margin-bottom: var(--space-4);
-}
 
-/* ── Full Tank Toggle Row ── */
-.full-tank-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  margin-bottom: var(--space-4);
-}
 
-.full-tank-label {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: var(--text-sm);
-  font-weight: 500;
-  color: var(--text-primary);
-  flex: 1;
-}
-
-.full-tank-icon {
-  font-size: 1.1rem;
-}
-
-.full-tank-hint {
-  font-size: var(--text-xs);
-  color: var(--text-tertiary);
-  flex-shrink: 0;
-}
 
 /* ── Smart Insights — Premium Design ── */
 .insights-section {
