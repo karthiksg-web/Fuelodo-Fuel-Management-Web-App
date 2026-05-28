@@ -1,5 +1,5 @@
 /* ============================================
-   FuelOdo - Vehicle Styles
+   FuelOdo - Vehicle Styles (Premium)
    ============================================ */
 
 .vehicles-grid {
@@ -12,15 +12,23 @@
   position: relative;
   overflow: hidden;
   cursor: default;
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
 }
 
 .vehicle-card::before {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, var(--primary-500), var(--accent-500));
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary-400), var(--cyan-400), var(--accent-400));
+  background-size: 200% auto;
+  animation: gradient-shift 4s ease infinite;
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+.vehicle-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg), var(--shadow-glow-primary);
 }
 
 .vehicle-header {
@@ -43,11 +51,11 @@
   align-items: center;
   justify-content: center;
   font-size: 1.5rem;
-  background: linear-gradient(135deg, var(--primary-100), var(--primary-50));
+  background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(6,182,212,0.1));
 }
 
 [data-theme="dark"] .vehicle-icon {
-  background: linear-gradient(135deg, rgba(59,91,255,0.2), rgba(59,91,255,0.1));
+  background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(6,182,212,0.1));
 }
 
 .vehicle-name {
@@ -83,6 +91,11 @@
   padding: var(--space-3);
   background: var(--bg-tertiary);
   border-radius: var(--radius-md);
+  transition: background var(--transition-fast);
+}
+
+.vehicle-stat:hover {
+  background: rgba(99,102,241,0.06);
 }
 
 .vehicle-stat .stat-val {

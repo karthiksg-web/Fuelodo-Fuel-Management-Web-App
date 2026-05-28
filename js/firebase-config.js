@@ -20,6 +20,20 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
+// Initialize App Check with reCAPTCHA v3
+if (typeof window !== "undefined" && firebase.appCheck) {
+  try {
+    const appCheck = firebase.appCheck();
+    appCheck.activate(
+      '6Ld0D9QsAAAAANfWDBPAYZdXqtd-1Bt4E6vPne1P', // reCAPTCHA v3 site key
+      true // isTokenAutoRefreshEnabled
+    );
+    console.log("[AppCheck] Firebase App Check initialized successfully.");
+  } catch (err) {
+    console.error("[AppCheck] Firebase App Check initialization failed:", err);
+  }
+}
+
 // Initialize Analytics & define global logging helper
 let analytics = null;
 if (typeof window !== "undefined" && firebase.analytics) {

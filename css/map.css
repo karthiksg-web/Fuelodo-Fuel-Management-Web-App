@@ -4,8 +4,6 @@
 
 /* ── Map Page Container ── */
 #pageMap {
-  position: relative;
-  height: calc(100vh - var(--header-height));
   padding: 0 !important;
   overflow: hidden;
 }
@@ -844,108 +842,101 @@
   top: calc(var(--space-4) + 60px) !important;
 }
 
-/* ── Mobile Responsive ── */
-@media (max-width: 768px) {
-  #pageMap {
-    height: calc(100vh - var(--header-height) - 64px);
-    /* subtract bottom nav */
-  }
+/* ── Mobile Responsive App Design ── */
+.map-search-container {
+  top: var(--space-3);
+  left: var(--space-3);
+  right: var(--space-3);
+}
 
-  .map-search-container {
-    top: var(--space-3);
-    left: var(--space-3);
-    right: var(--space-3);
-  }
+.map-search-card {
+  max-width: none;
+}
 
-  .map-search-card {
-    max-width: none;
-  }
+.map-search-input-wrap {
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-xl);
+}
 
-  .map-search-input-wrap {
-    padding: var(--space-1) var(--space-2);
-    border-radius: var(--radius-xl);
-  }
+.map-search-input {
+  font-size: var(--text-xs);
+  padding: var(--space-2) var(--space-1);
+}
 
-  .map-search-input {
-    font-size: var(--text-xs);
-    padding: var(--space-2) var(--space-1);
-  }
+.map-search-gps-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+}
 
-  .map-search-gps-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: var(--radius-md);
-  }
+.map-search-gps-btn .gps-icon {
+  font-size: 0.95rem;
+}
 
-  .map-search-gps-btn .gps-icon {
-    font-size: 0.95rem;
-  }
+.map-top-panel {
+  top: calc(var(--space-3) + 54px) !important;
+  left: var(--space-3);
+  right: var(--space-3);
+}
 
-  .map-top-panel {
-    top: calc(var(--space-3) + 54px) !important;
-    left: var(--space-3);
-    right: var(--space-3);
-  }
+.map-stations-card {
+  border-radius: var(--radius-xl);
+}
 
-  .map-stations-card {
-    border-radius: var(--radius-xl);
-  }
+.map-card-header {
+  padding: var(--space-2) var(--space-3);
+}
 
-  .map-card-header {
-    padding: var(--space-2) var(--space-3);
-  }
+.map-card-title {
+  font-size: var(--text-xs);
+}
 
-  .map-card-title {
-    font-size: var(--text-xs);
-  }
+.map-stations-scroll {
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+}
 
-  .map-stations-scroll {
-    gap: var(--space-2);
-    padding: var(--space-2) var(--space-3);
-  }
+.map-station-chip {
+  min-width: 170px;
+  max-width: 200px;
+  padding: var(--space-2) var(--space-3);
+}
 
-  .map-station-chip {
-    min-width: 170px;
-    max-width: 200px;
-    padding: var(--space-2) var(--space-3);
-  }
+.chip-icon {
+  width: 32px;
+  height: 32px;
+  font-size: 0.95rem;
+}
 
-  .chip-icon {
-    width: 32px;
-    height: 32px;
-    font-size: 0.95rem;
-  }
+.map-controls {
+  bottom: var(--space-4);
+  right: var(--space-3);
+  gap: var(--space-3);
+}
 
-  .map-controls {
-    bottom: var(--space-4);
-    right: var(--space-3);
-    gap: var(--space-3);
-  }
+.map-control-btn {
+  width: 40px;
+  height: 40px;
+  font-size: 1.1rem;
+}
 
-  .map-control-btn {
-    width: 40px;
-    height: 40px;
-    font-size: 1.1rem;
-  }
+.map-radius-label {
+  bottom: var(--space-4);
+  left: var(--space-3);
+  font-size: 0.65rem;
+  padding: var(--space-1) var(--space-3);
+}
 
-  .map-radius-label {
-    bottom: var(--space-4);
-    left: var(--space-3);
-    font-size: 0.65rem;
-    padding: var(--space-1) var(--space-3);
-  }
+.leaflet-popup-content {
+  min-width: 200px;
+}
 
-  .leaflet-popup-content {
-    min-width: 200px;
-  }
+.search-result-name {
+  font-size: var(--text-xs);
+}
 
-  .search-result-name {
-    font-size: var(--text-xs);
-  }
-
-  .search-result-detail {
-    font-size: 0.65rem;
-  }
+.search-result-detail {
+  font-size: 0.65rem;
 }
 
 /* ── Map Page within Page Content ── */
@@ -962,4 +953,24 @@
 
 .map-page-active .main-content {
   overflow: hidden;
+}
+
+/* ── Map page: use fixed positioning so size is viewport-relative,
+   bypassing the parent height-chain issue entirely ── */
+.map-page-active #pageMap {
+  position: fixed;
+  top: var(--header-height);     /* below fixed header */
+  left: var(--sidebar-width);    /* right of fixed sidebar on desktop */
+  right: 0;
+  bottom: 0;
+  height: auto !important;       /* determined by top/bottom */
+  z-index: 10;                   /* below header (90) and sidebar (100) */
+}
+
+/* Mobile: no sidebar, account for bottom nav */
+@media (max-width: 768px) {
+  .map-page-active #pageMap {
+    left: 0;
+    bottom: 64px; /* mobile bottom nav height */
+  }
 }

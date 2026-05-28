@@ -1,5 +1,5 @@
 /* ============================================
-   FuelOdo - Dashboard Styles
+   FuelOdo - Dashboard Styles (Premium)
    ============================================ */
 
 /* ── Stat Cards Grid ── */
@@ -21,6 +21,7 @@
   font-size: var(--text-sm);
   font-weight: 500;
   color: var(--text-secondary);
+  letter-spacing: 0.01em;
 }
 
 .stat-card .stat-value {
@@ -28,6 +29,31 @@
   font-weight: 700;
   font-family: var(--font-heading);
   margin-bottom: var(--space-1);
+  background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-card.blue .stat-value {
+  background: linear-gradient(135deg, var(--primary-400), var(--primary-200));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-card.green .stat-value {
+  background: linear-gradient(135deg, var(--accent-400), var(--accent-200));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-card.amber .stat-value {
+  background: linear-gradient(135deg, var(--warning-400), var(--warning-200));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .stat-card .stat-change {
@@ -60,6 +86,12 @@
 
 .chart-card {
   padding: var(--space-6);
+  border: 1px solid var(--border-color);
+  transition: box-shadow var(--transition-base);
+}
+
+.chart-card:hover {
+  box-shadow: var(--shadow-lg), var(--shadow-glow-primary);
 }
 
 .chart-card .card-header {
@@ -90,23 +122,31 @@
   padding: var(--space-5);
   cursor: pointer;
   text-align: left;
+  border: 1px solid var(--border-color);
 }
 
 .quick-action-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px);
   box-shadow: var(--shadow-lg), var(--shadow-glow);
+  border-color: rgba(99,102,241,0.2);
 }
 
 .quick-action-card .action-icon {
-  width: 44px; height: 44px;
-  border-radius: var(--radius-lg);
+  width: 48px; height: 48px;
+  border-radius: var(--radius-xl);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.3rem;
-  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+  font-size: 1.4rem;
+  background: linear-gradient(135deg, var(--primary-400), var(--primary-600));
   color: white;
   flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(99,102,241,0.25);
+  transition: transform var(--transition-spring);
+}
+
+.quick-action-card:hover .action-icon {
+  transform: scale(1.1) rotate(-5deg);
 }
 
 .quick-action-card .action-label {

@@ -63,13 +63,15 @@ button {
 }
 
 /* ── Scrollbar ── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: var(--text-tertiary);
+  background: linear-gradient(180deg, var(--primary-500), var(--cyan-500));
   border-radius: var(--radius-full);
 }
-::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--primary-400), var(--cyan-400));
+}
 
 /* ── Selection ── */
 ::selection {
@@ -87,12 +89,13 @@ button {
   border: 0;
 }
 
+/* ── Animations ── */
 .fade-in {
   animation: fadeIn var(--transition-slow) ease-out;
 }
 
 .slide-up {
-  animation: slideUp var(--transition-slow) ease-out;
+  animation: slideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .slide-in-right {
@@ -105,7 +108,7 @@ button {
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(24px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -123,24 +126,46 @@ button {
   to { transform: rotate(360deg); }
 }
 
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  33% { transform: translateY(-12px) rotate(1deg); }
+  66% { transform: translateY(4px) rotate(-1deg); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 0.7; }
+  50% { transform: scale(1.05); opacity: 1; }
+}
+
+/* ── Stagger delays ── */
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.1s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.2s; }
+.stagger-5 { animation-delay: 0.25s; }
+
 /* ── App Layout ── */
 .app-layout {
   display: flex;
   min-height: 100vh;
-}
-
-.main-content {
-  flex: 1;
-  margin-left: var(--sidebar-width);
-  padding-top: var(--header-height);
-  transition: margin-left var(--transition-base);
-  min-height: 100vh;
-}
-
-.page-content {
-  padding: var(--space-8);
-  max-width: 1400px;
-  margin: 0 auto;
+  position: relative;
+  background: var(--bg-primary);
 }
 
 /* ── Section (SPA pages) ── */
@@ -172,4 +197,55 @@ button {
 
 .section-header h2 .icon {
   font-size: var(--text-3xl);
+}
+
+/* ── Animated Mesh Background (for decorated pages) ── */
+.mesh-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.mesh-bg .orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.5;
+  animation: float 20s ease-in-out infinite;
+  will-change: transform;
+}
+
+.mesh-bg .orb-1 {
+  width: 300px; height: 300px;
+  background: rgba(99, 102, 241, 0.15);
+  top: -10%; left: -5%;
+  animation-duration: 22s;
+}
+
+.mesh-bg .orb-2 {
+  width: 250px; height: 250px;
+  background: rgba(6, 182, 212, 0.12);
+  top: 50%; right: -10%;
+  animation-duration: 18s;
+  animation-delay: -5s;
+}
+
+.mesh-bg .orb-3 {
+  width: 200px; height: 200px;
+  background: rgba(34, 197, 94, 0.10);
+  bottom: -5%; left: 30%;
+  animation-duration: 25s;
+  animation-delay: -10s;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .mesh-bg .orb { animation: none; }
 }

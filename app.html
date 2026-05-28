@@ -2,10 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="FuelOdo Dashboard - Track fuel usage, vehicle performance, and expenses in real-time.">
-  <title>FuelOdo - Dashboard</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛽</text></svg>">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="FuelOdo Dashboard – Track fuel usage, vehicle performance, and expenses in real-time. By Karthik Sulakhe.">
+  <title>FuelOdo – By Karthik Sulakhe | Dashboard</title>
+  <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg">
+  <link rel="icon" type="image/png" sizes="512x512" href="/icons/favicon-512.png">
+  <link rel="shortcut icon" href="/icons/favicon-512.png">
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/components.css">
@@ -14,7 +16,7 @@
   <link rel="stylesheet" href="css/fuel.css">
   <link rel="stylesheet" href="css/speedometer.css">
   <link rel="stylesheet" href="css/responsive.css">
-  <link rel="stylesheet" href="css/map.css">
+  <link rel="stylesheet" href="css/map.css?v=6">
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
@@ -23,15 +25,49 @@
 <body>
   <!-- Loading Overlay -->
   <div class="loading-overlay" id="loadingOverlay">
-    <div class="loading-spinner"></div>
-    <div class="loading-text">Loading FuelOdo...</div>
+    <div class="loading-logo-group">
+      <div class="loading-badge">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="48" height="48" aria-hidden="true">
+          <path d="M36 62 Q50 44 64 62" stroke="white" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <line x1="50" y1="62" x2="42" y2="50" stroke="white" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="50" cy="62" r="3.5" fill="white"/>
+        </svg>
+      </div>
+      <div class="loading-title">FuelOdo</div>
+      <div class="loading-subtitle">Smart Fuel & Expense Tracker</div>
+    </div>
   </div>
 
   <div class="app-layout" id="appLayout" style="display:none;">
+    <!-- Animated Mesh Background -->
+    <div class="mesh-bg" aria-hidden="true">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+    </div>
     <!-- ═══════════════ SIDEBAR ═══════════════ -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
-        <span class="sidebar-logo">⛽</span>
+        <div class="sidebar-logo-svg">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="32" height="32" aria-hidden="true">
+            <defs>
+              <linearGradient id="sideDropGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#6366f1"/>
+                <stop offset="100%" style="stop-color:#4338ca"/>
+              </linearGradient>
+              <filter id="sideGlow">
+                <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
+                <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+            <rect width="100" height="100" rx="22" fill="rgba(99,102,241,0.15)"/>
+            <path d="M50 15 C50 15 28 42 28 58 C28 71 38 82 50 82 C62 82 72 71 72 58 C72 42 50 15 50 15Z" fill="url(#sideDropGrad)" filter="url(#sideGlow)"/>
+            <path d="M36 62 Q50 44 64 62" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round" opacity="0.95"/>
+            <line x1="50" y1="62" x2="42" y2="50" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.95"/>
+            <circle cx="50" cy="62" r="3" fill="white" opacity="0.95"/>
+            <polygon points="41,46 44,52 40,52 43,58" fill="#22c55e" filter="url(#sideGlow)"/>
+          </svg>
+        </div>
         <div class="sidebar-brand">Fuel<span>Odo</span></div>
       </div>
       <nav class="sidebar-nav">
@@ -91,7 +127,23 @@
       </div>
       
       <div class="header-center mobile-only">
-        <div class="header-brand">Fuel<span>Odo</span></div>
+        <div class="header-brand" style="display:flex;align-items:center;gap:6px;">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="22" height="22" aria-hidden="true">
+            <defs>
+              <linearGradient id="hdrDropGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#6366f1"/>
+                <stop offset="100%" style="stop-color:#4338ca"/>
+              </linearGradient>
+            </defs>
+            <rect width="100" height="100" rx="22" fill="rgba(99,102,241,0.2)"/>
+            <path d="M50 15 C50 15 28 42 28 58 C28 71 38 82 50 82 C62 82 72 71 72 58 C72 42 50 15 50 15Z" fill="url(#hdrDropGrad)"/>
+            <path d="M36 62 Q50 44 64 62" stroke="white" stroke-width="4" fill="none" stroke-linecap="round"/>
+            <line x1="50" y1="62" x2="42" y2="50" stroke="white" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="50" cy="62" r="3.5" fill="white"/>
+            <polygon points="41,46 44,52 40,52 43,58" fill="#22c55e"/>
+          </svg>
+          Fuel<span>Odo</span>
+        </div>
       </div>
 
       <div class="header-right">
@@ -793,6 +845,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check-compat.js"></script>
 
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
@@ -819,6 +872,6 @@
   <script src="js/reminders.js?v=4"></script>
   <script src="js/maintenance.js?v=4"></script>
   <script src="js/insights.js?v=4"></script>
-  <script src="js/map.js?v=4"></script>
+  <script src="js/map.js?v=7"></script>
 </body>
 </html>

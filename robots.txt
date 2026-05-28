@@ -1,4 +1,12 @@
 User-agent: *
 Allow: /
+Disallow: /app.html
+Disallow: /functions/
+
+# Allow SEO assets
+Allow: /sitemap.xml
+Allow: /robots.txt
+Allow: /icons/og-image.png
+Allow: /icons/favicon-512.png
 
 Sitemap: https://fuelodo.web.app/sitemap.xml

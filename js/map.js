@@ -123,6 +123,12 @@ const FuelMap = (function () {
       });
 
       state.isInitialized = true;
+
+      // Leaflet reads container size at init time, but the container may not
+      // have been painted yet (SPA page transition). Wait for the next paint.
+      requestAnimationFrame(() => {
+        if (state.map) state.map.invalidateSize();
+      });
     },
 
     /**
@@ -149,7 +155,10 @@ const FuelMap = (function () {
      */
     refresh() {
       if (state.map) {
-        setTimeout(() => state.map.invalidateSize(), 200);
+        // Call invalidateSize with a short delay to let CSS transitions settle,
+        // then again at a longer delay as a safety net for SPA page transitions
+        setTimeout(() => state.map.invalidateSize(), 100);
+        setTimeout(() => state.map.invalidateSize(), 400);
       }
     },
   };
@@ -475,9 +484,8 @@ const FuelMap = (function () {
             ${MapUtils.escapeHtml(station.name)}
           </div>
           <div class="station-popup-distance">
-            📍 ${distText} away &nbsp;·&nbsp; ${MapUtils.getStationPrice(station.id)}/L
+            📍 ${distText} away
           </div>
-          <div class="station-popup-meta">Prices are estimated</div>
           <a href="https://www.google.com/maps/dir/?api=1&destination=${station.lat},${station.lng}"
              target="_blank"
              rel="noopener noreferrer"
@@ -719,9 +727,6 @@ const FuelMap = (function () {
               <div class="chip-name" title="${MapUtils.escapeHtml(s.name)}">${MapUtils.escapeHtml(truncName)}</div>
               <div class="chip-meta">
                 <span class="chip-distance">${distText}</span>
-                <span class="chip-dot"></span>
-                <span class="chip-price">${MapUtils.getStationPrice(s.id)}</span>
-                <span class="chip-est">Est.</span>
               </div>
             </div>
           </div>
