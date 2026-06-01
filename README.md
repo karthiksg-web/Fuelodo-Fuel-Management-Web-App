@@ -111,8 +111,6 @@ That's it! No setup, no installation. 🎉
 Have a question or found a bug? Reach out:
 
 - 📧 Email: [projects.karthiksulakhe@gmail.com](mailto:projects.karthiksulakhe@gmail.com)
-- 📞 Phone: [+91 9448560958](tel:+919448560958)
-
 ---
 
 ## 📄 License
